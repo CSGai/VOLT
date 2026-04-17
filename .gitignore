@@ -1,41 +1,151 @@
+# =========================
 # Prerequisites
+# =========================
 *.d
 
+# =========================
 # Compiled Object files
+# =========================
 *.slo
 *.lo
 *.o
 *.obj
 
+# =========================
 # Precompiled Headers
+# =========================
 *.gch
 *.pch
 
+# =========================
 # Linker files
+# =========================
 *.ilk
 
+# =========================
 # Debugger Files
+# =========================
 *.pdb
 
+# =========================
 # Compiled Dynamic libraries
+# =========================
 *.so
 *.dylib
 *.dll
 
-# Fortran module files
+# =========================
+# Fortran module files (safe to keep even if unused)
+# =========================
 *.mod
 *.smod
 
+# =========================
 # Compiled Static libraries
+# =========================
 *.lai
 *.la
 *.a
 *.lib
 
+# =========================
 # Executables
+# =========================
 *.exe
 *.out
 *.app
 
-# debug information files
+# =========================
+# Debug / coverage / profiling
+# =========================
 *.dwo
+*.gcda
+*.gcno
+*.gcov
+gmon.out
+perf.data*
+callgrind.out.*
+
+# =========================
+# CMake build system
+# =========================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# common build directories
+build/
+cmake-build-*/
+out/
+bin/
+obj/
+
+# =========================
+# IDEs
+# =========================
+
+# CLion
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Visual Studio
+.vs/
+*.vcxproj*
+*.sln
+*.user
+*.VC.db
+*.VC.VC.opendb
+
+# =========================
+# Logs / runtime output
+# =========================
+logs/
+*.log
+*.out.txt
+
+# =========================
+# Trading bot sensitive config (VERY IMPORTANT)
+# =========================
+
+# Ignore everything inside config, but keep the folder itself
+config/*
+
+# =========================
+# Data / market / backtesting outputs
+# =========================
+cache/
+results/
+backtests/
+
+*.csv
+*.jsonl
+*.parquet
+
+# =========================
+# Python tooling (backtests / scripts)
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env/
+.python-version
+
+# =========================
+# OS junk
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Editor swap files
+# =========================
+*.swp
+*.swo
+*~
