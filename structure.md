@@ -10,13 +10,10 @@ trading-bot/
 │   ├── api_keys.env
 │   ├── logging.json
 │
-trading-bot/
 │
-├── config/
 │
 ├── src/
 │   ├── core/
-│   ├── config/
 │   ├── data/
 │   ├── APIs/
 │   ├── strategy/
