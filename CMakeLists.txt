@@ -1,24 +1,62 @@
-﻿# CMakeList.txt : CMake project for TradingBot, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.14)
 
-# Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("TradingBot")
+project("TradingBot")
 
-# Add source to this project's executable.
-add_executable (TradingBot 
+# Generate compile_commands.json for clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# ... rest of file
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(BUILD_SHARED_LIBS OFF)
+
+set(CPR_USE_SYSTEM_CURL OFF)
+set(CPR_FORCE_USE_SYSTEM_CURL OFF)
+
+set(CURL_STATICLIB ON)
+set(BUILD_CURL_EXE OFF)
+set(CURL_ZLIB OFF)
+
+# Fetch CPR as static library
+include(FetchContent)
+
+
+FetchContent_Declare(cpr
+    GIT_REPOSITORY https://github.com/libcpr/cpr.git
+    GIT_TAG 1.10.5
+)
+FetchContent_MakeAvailable(cpr)
+FetchContent_Declare(json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(json)
+
+
+# Add executable
+add_executable(TradingBot 
     src/TradingBot.cpp
     src/TradingBot.h
+
+    # market
+    src/APIs/market/market.h
+    src/APIs/market/YahooFinance.cpp
+    src/APIs/market/Analysis.cpp
+
+    # utils
+    src/utils/utils.h
+    src/utils/unix_timestamp_converter.cpp
 )
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET TradingBot PROPERTY CXX_STANDARD 20)
-endif()
+target_link_libraries(TradingBot PRIVATE 
+    cpr::cpr 
+    nlohmann_json::nlohmann_json
+)
 
-# TODO: Add tests and install targets if needed.
+target_include_directories(TradingBot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

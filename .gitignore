@@ -114,6 +114,7 @@ logs/
 
 # Ignore everything inside config, but keep the folder itself
 config/*
+!example_strategy.json
 
 # =========================
 # Data / market / backtesting outputs
