@@ -35,12 +35,6 @@
 *.dll
 
 # =========================
-# Fortran module files (safe to keep even if unused)
-# =========================
-*.mod
-*.smod
-
-# =========================
 # Compiled Static libraries
 # =========================
 *.lai
@@ -102,33 +96,37 @@ obj/
 *.VC.VC.opendb
 
 # =========================
-# Logs / runtime output
+# Logs
 # =========================
-logs/
+logs/*
+!logs/.gitkeep
 *.log
-*.out.txt
 
 # =========================
-# Trading bot sensitive config (VERY IMPORTANT)
+# Trading bot sensitive config
 # =========================
-
-# Ignore everything inside config, but keep the folder itself
 config/*
-!example_strategy.json
+!config/.gitkeep
+!config/example_strategy.json
 
 # =========================
 # Data / market / backtesting outputs
 # =========================
-cache/
-results/
-backtests/
+cache/*
+!cache/.gitkeep
+
+results/*
+!results/.gitkeep
+
+backtests/*
+!backtests/.gitkeep
 
 *.csv
 *.jsonl
 *.parquet
 
 # =========================
-# Python tooling (backtests / scripts)
+# Python tooling
 # =========================
 __pycache__/
 *.pyc

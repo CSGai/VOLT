@@ -1,0 +1,9 @@
+# Create empty .gitkeep files
+touch logs/.gitkeep
+touch cache/.gitkeep
+touch results/.gitkeep
+touch backtests/.gitkeep
+touch config/.gitkeep
+
+# Add them to git
+git add logs/.gitkeep cache/.gitkeep results/.gitkeep backtests/.gitkeep config/.gitkeep
