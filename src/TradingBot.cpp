@@ -11,30 +11,37 @@ using namespace std;
 void tests();
 
 int main() {
-  cout << "Begin Trading Bot." << endl;
+    cout << "Begin Trading Bot." << endl;
 
-  tests();
-  cin.get();
-  return 0;
+    tests();
+    // cin.get();
+    return 0;
 }
 
 void tests() {
-  // market tests
-  cout << "Testing endpoints:" << endl;
-  time_t p1 = 1699549200;
-  time_t p2 = 1731319200;
-  market::test_endpoints("PLTR", p1, p2, market::_1d);
-  cout << market::test_analysis() << endl;
-  cout << "test finished" << endl;
 
-  // util tests
-  cout << "testing utils:" << endl;
+    time_t p1 = 1699549200;
+    time_t p2 = 1731319200;
 
-  time_t unix_tstamp = 1699549200;
-  char converted_tstamp[20];
+    // market tests
+    cout << "Testing endpoints:" << endl;
+    market::test_yahoo_endpoints("PLTR", p1, p2, market::_1d);
+    cout << market::test_analysis() << endl;
+    cout << "test finished" << endl << endl;
 
-  gutils::unix2datetime(converted_tstamp, sizeof(converted_tstamp),
-                        unix_tstamp);
-  cout << "unix tstamp: " << unix_tstamp
-       << " converted to strftime: " << converted_tstamp << endl;
+    // util tests
+    cout << "testing utils:" << endl;
+    tm dt_test;
+    time_t p3;
+    char buffer[20];
+
+    gutils::dt::unix2datetime_gmt(&p1, &dt_test);
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &dt_test);
+    gutils::dt::datetime2unix(&dt_test, &p3);
+
+    cout << "unix -> datetime: " << p1 << " -> " << buffer << endl;
+    cout << "datetime -> unix: " << buffer << " -> " << p3 << endl;
+    cout << "test finished" << endl << endl;
+
+    
 }

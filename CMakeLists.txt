@@ -46,7 +46,7 @@ add_executable(TradingBot
 
     # market
     src/APIs/market/market.h
-    src/APIs/market/YahooFinance.cpp
+    src/APIs/market/YahooAPI.cpp
     src/APIs/market/Analysis.cpp
 
     # utils

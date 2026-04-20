@@ -1,9 +1,9 @@
 #pragma once
 #include <ctime>
 
-namespace gutils {
+namespace gutils::dt {
+    void unix2datetime_gmt(time_t* unix_tstamp, tm* dt);
+    void unix2datetime_local(time_t* unix_tstamp, tm* dt);
 
-void unix2datetime(char *buffer, size_t buffer_size, time_t unix_tstamp);
-void datetime2unix(char *datetime);
-
-} // namespace gutils
+    void datetime2unix(tm* dt, time_t* unix_tstamp);
+} // namespace gutils::dt
