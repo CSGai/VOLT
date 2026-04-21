@@ -1,6 +1,6 @@
-#include "cpr/verbose.h"
 #include "market.h"
 
+// #include "cpr/verbose.h"
 #include "cpr/api.h"
 #include "cpr/cprtypes.h"
 #include "cpr/parameters.h"
@@ -53,7 +53,6 @@ namespace market {
             res = Get(YAHOO_RT_ENDPOINT, params);
         }
         return res;
-        return cpr::Response{};
     }
     // session get
     cpr::Response YahooAPI::Get(const std::string& endpoint, cpr::Parameters params, cpr::Header headers) {
