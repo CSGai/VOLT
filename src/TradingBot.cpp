@@ -14,7 +14,7 @@ int main() {
     cout << "Begin Trading Bot." << endl;
 
     tests();
-    // cin.get();
+    cin.get();
     return 0;
 }
 
@@ -25,8 +25,11 @@ void tests() {
 
     // market tests
     cout << "Testing endpoints:" << endl;
-    market::test_yahoo_endpoints("PLTR", p1, p2, market::_1d);
-    cout << market::test_analysis() << endl;
+    market::YahooAPI yahoo;
+
+    cout << "historical data test: " << yahoo.get_hist("PLTR", p1, p2, market::_1d).status_line << endl;
+    cout << "RT data test: " << yahoo.get_rt({"PLTR", "AAPL", "GOOGL"}).text << endl;
+    
     cout << "test finished" << endl << endl;
 
     // util tests
@@ -42,6 +45,4 @@ void tests() {
     cout << "unix -> datetime: " << p1 << " -> " << buffer << endl;
     cout << "datetime -> unix: " << buffer << " -> " << p3 << endl;
     cout << "test finished" << endl << endl;
-
-    
 }
