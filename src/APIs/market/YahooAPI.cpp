@@ -42,10 +42,12 @@ namespace market {
             get_crumb();
         }
         // concat symbols with delimiter ','
-        std::string str_symbols =
-            std::accumulate(std::next(symbols.begin()), symbols.end(), symbols.empty() ? std::string{} : symbols.front(),
-                            [](std::string a, const std::string& b) { return std::move(a) + ',' + b; });
-        
+        std::string str_symbols;
+        for (size_t i = 0; i < symbols.size(); ++i) {
+            if (i > 0) str_symbols += ',';
+            str_symbols += symbols[i];
+        }
+
         cpr::Parameters params = cpr::Parameters{{"symbols", str_symbols}, {"crumb", this->crumb}};
         cpr::Response res = Get(YAHOO_RT_ENDPOINT, params);
         if (res.status_code != 200) {
