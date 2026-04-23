@@ -45,18 +45,17 @@ add_executable(TradingBot
     # src/TradingBot.h
 
     # market
-    src/APIs/market/market.h
-    src/APIs/market/YahooAPI.cpp
-
-    # utils
-    src/APIs/news/news.h
-    src/APIs/news/greed.cpp
-    
+    src/APIs/scrapping/scrapping.h
+    src/APIs/scrapping/Article.cpp
+    src/APIs/scrapping/Yahoo.cpp
+    # src/APIs/news/greed.cpp
+    # src/APIs/news/cnbc.cpp
 
     # utils
     src/utils/utils.h
     src/utils/json_handler.cpp
     src/utils/datetime.cpp
+    
 )
 
 target_link_libraries(TradingBot PRIVATE 

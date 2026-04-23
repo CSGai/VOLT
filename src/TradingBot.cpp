@@ -1,5 +1,5 @@
 ﻿// #include "TradingBot.h"
-#include "APIs/market/market.h"
+#include "APIs/scrapping/scrapping.h"
 #include "utils/utils.h"
 
 #include <ctime>
@@ -9,34 +9,39 @@
 using namespace std;
 
 void run_all_test();
-void run_market_tests();
+void run_scrapping_tests();
 void run_utils_tests();
 
 int main() {
     cout << "Begin Trading Bot." << endl;
 
-    run_utils_tests();
+    run_scrapping_tests();
+    // run_utils_tests();
     cin.get();
     return 0;
 }
 
 void run_all_test() {
     run_utils_tests();
-    run_market_tests();
+    run_scrapping_tests();
 }
-// market tests
-void run_market_tests() {
+// scrapping tests
+void run_scrapping_tests() {
 
     cout << "--------market test--------" << endl << endl;
     time_t p1 = 1699549200;
     time_t p2 = 1731319200;
 
-    market::YahooAPI yahoo;
-    const auto& hist = yahoo.get_hist("PLTR", p1, p2, market::_1d);
-    const auto& rt = yahoo.get_rt({"PLTR", "AAPL", "GOOGL"});
+    api::Yahoo yahoo;
+    const auto& hist = yahoo.get_hist("PLTR", p1, p2, api::_1d);
+    const auto& quote = yahoo.get_quote({"PLTR", "AAPL", "GOOGL"});
+    const auto& news = yahoo.get_news({"PLTR", "AAPL", "GOOGL"}, 10);
+    const auto& headlines = yahoo.get_headlines({"PLTR", "AAPL", "GOOGL"});
 
-    cout << "historical data test: " << hist.status_line << endl;
-    cout << "RT data test: " << rt.status_line << endl;
+    cout << "Historical data test: " << hist.status_line << endl;
+    cout << "Quote data test: " << quote.status_line << endl;
+    cout << "Ticker news test: " << news.status_line << endl;
+    cout << "headlines test: " << headlines.status_line << endl;
 
     cout << "----test finished----" << endl << endl;
 }
