@@ -1,30 +1,43 @@
-#include "utils.h"
-
+#include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 namespace _json {
-    void write_cache(const std::string& json_name, const json& json_data) {
+
+    void write_cache(const fs::path& path, const json& data) {
+        const auto tmp = fs::path(path).concat(".tmp");
+
+        fs::create_directories(path.parent_path());
+
+        if (std::ofstream f(tmp, std::ios::binary); f) f << data.dump(4);
+        else
+            throw std::runtime_error("Cannot write: " + tmp.string());
+
+        fs::rename(tmp, path);
+    }
+    json read_cache(const std::filesystem::path& path) {
         try {
-            std::ofstream file(json_name);
-            if (!file.is_open()) {
-                throw std::runtime_error("Could not open file: " + json_name);
+            std::ifstream file(path);
+            if (!file) {
+                throw std::runtime_error("Could not open file for reading: " + path.string());
             }
 
-            file << json_data.dump(4);
+            json data;
+            file >> data;
 
-        } catch (std::exception& e) {
-            std::cerr << "Error writing JSON: " << e.what() << std::endl;
-            throw;
+            return data;
+        } catch (const json::parse_error& e) {
+            std::cerr << "JSON parse error in '" << path << "': " << e.what() << '\n';
+        } catch (const std::exception& e) {
+            std::cerr << "Error reading cache '" << path << "': " << e.what() << '\n';
         }
-    }
-    json read_cache(const std::string& json_name) {
-        std::ifstream file(json_name);
-        json data = json::parse(file);
-        file.close();
-        return data;
+
+        return {};
     }
     json jsonify(std::string data) { return json::parse(data); }
     json test_json() {

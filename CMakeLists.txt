@@ -42,11 +42,16 @@ FetchContent_MakeAvailable(json)
 # Add executable
 add_executable(TradingBot 
     src/TradingBot.cpp
-    src/TradingBot.h
+    # src/TradingBot.h
 
     # market
     src/APIs/market/market.h
     src/APIs/market/YahooAPI.cpp
+
+    # utils
+    src/APIs/news/news.h
+    src/APIs/news/greed.cpp
+    
 
     # utils
     src/utils/utils.h

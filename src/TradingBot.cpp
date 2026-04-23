@@ -1,4 +1,4 @@
-﻿#include "TradingBot.h"
+﻿// #include "TradingBot.h"
 #include "APIs/market/market.h"
 #include "utils/utils.h"
 
@@ -49,7 +49,6 @@ void run_utils_tests() {
     tm dt_test;
     time_t p3;
     char buffer[20];
-
     dt::unix2datetime_gmt(&p1, &dt_test);
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &dt_test);
     dt::datetime2unix(&dt_test, &p3);
@@ -60,5 +59,6 @@ void run_utils_tests() {
 
     cout << "----json tests----" << endl;
     static const auto& test_file = _json::test_json();
-    _json::write_cache("test.json", test_file);
+    _json::write_cache("cache/test.json", test_file);
+    cout << "test cache: " <<_json::read_cache("cache/test.json") << std::endl;
 }
