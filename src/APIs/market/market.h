@@ -26,9 +26,9 @@ namespace market {
         _3mo
     };
 
-    class YahooAPI {
+    class QueryYahoo {
         public:
-            YahooAPI();
+            QueryYahoo();
 
             cpr::Response get_hist(const std::string& ticker, const time_t& period1, const time_t& period2,
                                    const market::intervals& interval);
@@ -52,9 +52,9 @@ static std::unordered_map<market::intervals, std::string> INTERVAL_MAP = {
     {market::_30m, "30m"}, {market::_60m, "60m"}, {market::_90m, "90m"}, {market::_1d, "1d"},
     {market::_5d, "5d"},   {market::_1wk, "1wk"}, {market::_1mo, "1mo"}, {market::_3mo, "3mo"}};
 
-static const std::string YAHOO_Q1 = "https://query1.finance.yahoo.com";
-static const std::string YAHOO_Q2 = "https://query2.finance.yahoo.com";
+static const std::string Q1_YAHOO = "https://query1.finance.yahoo.com";
+static const std::string Q2_YAHOO = "https://query2.finance.yahoo.com";
 
-static const std::string YAHOO_HIST_ENDPOINT = "/v8/finance/chart/";
-static const std::string YAHOO_RT_ENDPOINT = "/v7/finance/quote";
-static const std::string YAHOO_CRUMBS = "/v1/test/getcrumb";
+static const std::string QYAHOO_HIST = "/v8/finance/chart/";
+static const std::string QYAHOO_QUOTE = "/v7/finance/quote";
+static const std::string QYAHOO_CRUMBS = "/v1/test/getcrumb";
