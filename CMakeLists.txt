@@ -31,11 +31,11 @@ FetchContent_Declare(cpr
     GIT_REPOSITORY https://github.com/libcpr/cpr.git
     GIT_TAG 1.10.5
 )
-FetchContent_MakeAvailable(cpr)
 FetchContent_Declare(json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG v3.11.3
 )
+FetchContent_MakeAvailable(cpr)
 FetchContent_MakeAvailable(json)
 
 
@@ -47,11 +47,11 @@ add_executable(TradingBot
     # market
     src/APIs/market/market.h
     src/APIs/market/YahooAPI.cpp
-    src/APIs/market/Analysis.cpp
 
     # utils
     src/utils/utils.h
-    src/utils/unix_timestamp_converter.cpp
+    src/utils/json_handler.cpp
+    src/utils/datetime.cpp
 )
 
 target_link_libraries(TradingBot PRIVATE 

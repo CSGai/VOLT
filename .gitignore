@@ -113,7 +113,6 @@ config/*
 # Data / market / backtesting outputs
 # =========================
 cache/*
-!cache/.gitkeep
 
 results/*
 !results/.gitkeep
