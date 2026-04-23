@@ -1,19 +1,17 @@
 #include "market.h"
 
 // #include "cpr/verbose.h"
+#include <cpr/cpr.h>
 #include "cpr/api.h"
 #include "cpr/cprtypes.h"
 #include "cpr/parameters.h"
 #include "cpr/response.h"
 #include "cpr/session.h"
 
-#include <combaseapi.h>
-#include <cpr/cpr.h>
 #include <iostream>
-#include <rpcndr.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
+
 
 namespace market {
 
