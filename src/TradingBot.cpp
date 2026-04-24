@@ -1,5 +1,6 @@
 ﻿// #include "TradingBot.h"
 #include "services/collectors/market/market.h"
+#include "services/collectors/news/news.h"
 #include "utils/utils.h"
 
 #include <ctime>
@@ -9,13 +10,13 @@
 using namespace std;
 
 void run_all_test();
-void run_scrapping_tests();
+void run_collectors_tests();
 void run_utils_tests();
 
 int main() {
     cout << "Begin Trading Bot." << endl;
 
-    run_scrapping_tests();
+    run_collectors_tests();
     // run_utils_tests();
     cin.get();
     return 0;
@@ -23,25 +24,29 @@ int main() {
 
 void run_all_test() {
     run_utils_tests();
-    run_scrapping_tests();
+    run_collectors_tests();
 }
-// scrapping tests
-void run_scrapping_tests() {
+// collectors tests
+void run_collectors_tests() {
 
-    cout << "--------market test--------" << endl << endl;
+    cout << "--------collectors test--------" << endl << endl;
     time_t p1 = 1699549200;
     time_t p2 = 1731319200;
+
 
     api::Yahoo yahoo;
     const auto& hist = yahoo.get_hist("PLTR", p1, p2, api::_1d);
     const auto& quote = yahoo.get_quote({"PLTR", "AAPL", "GOOGL"});
-    // const auto& news = yahoo.get_news({"PLTR", "AAPL", "GOOGL"}, 10);
-    // const auto& headlines = yahoo.get_headlines({"PLTR", "AAPL", "GOOGL"});
+    const auto& ticker_news = yahoo.get_ticker_news({"PLTR", "AAPL", "GOOGL"}, 10);
+    const auto& headlines = news::get_ticker_headlines({"PLTR", "AAPL", "GOOGL"});
+    const auto& rss_news = news::rss_yahoo_news();
 
     cout << "Historical data test: " << hist.status_line << endl;
     cout << "Quote data test: " << quote.status_line << endl;
-    // cout << "Ticker news test: " << news.status_line << endl;
-    // cout << "headlines test: " << headlines.status_line << endl;
+    cout << "Ticker news test: " << ticker_news.status_line << endl;
+    cout << "headlines test: " << headlines.status_line << endl;
+    cout << "rss_news test: " << rss_news.status_line << endl;
+    
 
     cout << "----test finished----" << endl << endl;
 }

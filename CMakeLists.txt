@@ -50,6 +50,7 @@ add_executable(TradingBot
     src/services/collectors//market/Yahoo.cpp
     # news
     src/services/collectors/news/news.h
+    src/services/collectors/news/rss.cpp
     src/services/collectors/news/greed.cpp
     src/services/collectors/news/cnbc.cpp
     src/services/collectors/news/Article.cpp
