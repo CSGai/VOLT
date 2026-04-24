@@ -44,17 +44,22 @@ add_executable(TradingBot
     src/TradingBot.cpp
     # src/TradingBot.h
 
+    ## services
     # market
-    src/APIs/scrapping/scrapping.h
-    src/APIs/scrapping/Article.cpp
-    src/APIs/scrapping/Yahoo.cpp
-    # src/APIs/news/greed.cpp
-    # src/APIs/news/cnbc.cpp
+    src/services/collectors/market/market.h
+    src/services/collectors//market/Yahoo.cpp
+    # news
+    src/services/collectors/news/news.h
+    src/services/collectors/news/greed.cpp
+    src/services/collectors/news/cnbc.cpp
+    src/services/collectors/news/Article.cpp
+    
 
     # utils
     src/utils/utils.h
     src/utils/json_handler.cpp
     src/utils/datetime.cpp
+    
     
 )
 

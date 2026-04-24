@@ -1,5 +1,5 @@
 ﻿// #include "TradingBot.h"
-#include "APIs/scrapping/scrapping.h"
+#include "services/collectors/market/market.h"
 #include "utils/utils.h"
 
 #include <ctime>

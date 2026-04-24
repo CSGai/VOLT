@@ -1,0 +1,3 @@
+namespace news {
+    struct Article;
+}
