@@ -4,9 +4,6 @@
 #include <string>
 #include <unordered_map>
 
-namespace news {
-    struct Article;
-}
 
 namespace api {
 
