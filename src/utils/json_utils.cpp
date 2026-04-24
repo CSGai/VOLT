@@ -7,24 +7,25 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-namespace _json {
+namespace json_utils {
 
     void write_cache(const fs::path& path, const json& data) {
+        std::cout << "writing to cache: " << path << std::endl;
         const auto tmp = fs::path(path).concat(".tmp");
 
         fs::create_directories(path.parent_path());
 
         if (std::ofstream f(tmp, std::ios::binary); f) f << data.dump(4);
         else
-            throw std::runtime_error("Cannot write: " + tmp.string());
+            std::cerr << "Cannot write: " << tmp.string();
 
         fs::rename(tmp, path);
     }
-    json read_cache(const std::filesystem::path& path) {
+    json read_json(const std::filesystem::path& path) {
         try {
             std::ifstream file(path);
             if (!file) {
-                throw std::runtime_error("Could not open file for reading: " + path.string());
+                std::cerr << "Could not open file for reading: " << path.string();
             }
 
             json data;
@@ -39,7 +40,6 @@ namespace _json {
 
         return {};
     }
-    json jsonify(std::string data) { return json::parse(data); }
     json test_json() {
         json data;
 

@@ -95,10 +95,10 @@ namespace api {
             cpr::Response r = cpr::Get(cpr::Url{base_url + QYAHOO_HIST + params}, user_agent);
 
             if (r.status_code == 200) {
-                std::cout << "Success " << base_url << " HIST: " << r.status_code << std::endl;
+                std::cout << "Success: " << base_url << r.status_line << std::endl;
                 return base_url;
             }
-            std::cout << "FAILED " << base_url << " HIST: " << r.status_code << std::endl;
+            std::cout << "FAILED " << base_url << " HIST: " << r.status_line << std::endl;
         }
 
         // Better error handling instead of NULL
