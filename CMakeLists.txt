@@ -59,6 +59,7 @@ add_executable(TradingBot
     src/utils/utils.h
     src/utils/json_handler.cpp
     src/utils/datetime.cpp
+    src/utils/misc.cpp
     
     
 )

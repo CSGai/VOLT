@@ -1,5 +1,5 @@
 #include "market.h"
-
+#include "utils/utils.h"
 #include <cpr/cpr.h>
 
 #include <iostream>
@@ -11,8 +11,6 @@ static const std::string Q1_YAHOO = "https://query1.finance.yahoo.com";
 // Q2 is less stable than Q1
 static const std::string Q2_YAHOO = "https://query2.finance.yahoo.com";
 
-static const std::string F_YAHOO = "https://feeds.finance.yahoo.com";
-
 static const std::string QYAHOO_HIST = "/v8/finance/chart/";
 static const std::string QYAHOO_QUOTE = "/v7/finance/quote";
 static const std::string QYAHOO_CRUMBS = "/v1/test/getcrumb";
@@ -20,7 +18,6 @@ static const std::string QYAHOO_CRUMBS = "/v1/test/getcrumb";
 // q/s -> ticker for relevent news
 // newsCount -> amount of articles to get
 static const std::string QYAHOO_SEARCH = "/v1/finance/search";
-static const std::string FYAHOO_HEADLINES = "/rss/2.0/headline";
 
 namespace api {
 
@@ -50,7 +47,7 @@ namespace api {
             get_crumb();
         }
 
-        cpr::Parameters params = cpr::Parameters{{"symbols", join(symbols, ',')}, {"crumb", this->crumb}};
+        cpr::Parameters params = cpr::Parameters{{"symbols", misc::join(symbols, ',')}, {"crumb", this->crumb}};
         cpr::Response res = Get(host + QYAHOO_QUOTE, params);
         if (res.status_code != 200) {
             this->crumb = get_crumb();
@@ -59,14 +56,9 @@ namespace api {
         return res;
     }
 
-    cpr::Response Yahoo::get_news(const std::vector<std::string>& symbols, const int& news_count) {
-        cpr::Parameters params = cpr::Parameters{{"q", join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
+    cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, const int& news_count) {
+        cpr::Parameters params = cpr::Parameters{{"q", misc::join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
         return Get(host + QYAHOO_SEARCH, params);
-    }
-
-    cpr::Response Yahoo::get_headlines(const std::vector<std::string>& symbols) {
-        cpr::Parameters params = cpr::Parameters{{"s", join(symbols, ',')}, {"region", "US"}, {"lang", "en-US"}};
-        return Get(F_YAHOO + FYAHOO_HEADLINES, params);
     }
 
     // session get
@@ -113,15 +105,7 @@ namespace api {
         throw std::runtime_error("All Yahoo Finance endpoints failed");
     }
 
-    std::string Yahoo::join(const std::vector<std::string>& symbols, const char& delimiter) {
-        // concat symbols with delimiter
-        std::string str_symbols;
-        for (size_t i = 0; i < symbols.size(); ++i) {
-            if (i > 0) str_symbols += delimiter;
-            str_symbols += symbols[i];
-        }
-        return str_symbols;
-    }
+
 
 } // namespace api
 
