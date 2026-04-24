@@ -35,13 +35,13 @@ void run_scrapping_tests() {
     api::Yahoo yahoo;
     const auto& hist = yahoo.get_hist("PLTR", p1, p2, api::_1d);
     const auto& quote = yahoo.get_quote({"PLTR", "AAPL", "GOOGL"});
-    const auto& news = yahoo.get_news({"PLTR", "AAPL", "GOOGL"}, 10);
-    const auto& headlines = yahoo.get_headlines({"PLTR", "AAPL", "GOOGL"});
+    // const auto& news = yahoo.get_news({"PLTR", "AAPL", "GOOGL"}, 10);
+    // const auto& headlines = yahoo.get_headlines({"PLTR", "AAPL", "GOOGL"});
 
     cout << "Historical data test: " << hist.status_line << endl;
     cout << "Quote data test: " << quote.status_line << endl;
-    cout << "Ticker news test: " << news.status_line << endl;
-    cout << "headlines test: " << headlines.status_line << endl;
+    // cout << "Ticker news test: " << news.status_line << endl;
+    // cout << "headlines test: " << headlines.status_line << endl;
 
     cout << "----test finished----" << endl << endl;
 }

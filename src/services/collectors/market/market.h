@@ -1,9 +1,10 @@
 #pragma once
 
+#include "cpr/parameters.h"
+#include "cpr/response.h"
 #include <cpr/cpr.h>
 #include <string>
 #include <unordered_map>
-
 
 namespace api {
 
@@ -22,8 +23,7 @@ namespace api {
             cpr::Response get_hist(const std::string& ticker, const time_t& period1, const time_t& period2,
                                    const api::intervals& interval);
             cpr::Response get_quote(const std::vector<std::string>& symbols);
-            cpr::Response get_news(const std::vector<std::string>& symbols, const int& news_count);
-            cpr::Response get_headlines(const std::vector<std::string>& symbols);
+            cpr::Response get_ticker_news(const std::vector<std::string>& symbols, const int& news_count);
             std::string get_crumb();
 
         private:
@@ -31,10 +31,9 @@ namespace api {
             std::string host;
             std::string crumb;
 
-            cpr::Response Get(const std::string& url, cpr::Parameters params, cpr::Header headers = cpr::Header{});
-            
+            cpr::Response Get(const std::string& url, cpr::Parameters params = cpr::Parameters{}, cpr::Header headers = cpr::Header{});
+
             // util
-            static std::string join(const std::vector<std::string>& symbols, const char& delimiter);
             static std::string test_urls();
     };
 

@@ -17,3 +17,6 @@ namespace _json {
     json jsonify(std::string data);
     json test_json();
 } // namespace _json
+namespace misc {
+    std::string join(const std::vector<std::string>& symbols, const char& delimiter);
+}
