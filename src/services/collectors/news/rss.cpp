@@ -8,18 +8,14 @@ static const std::string YAHOO_RSS_NEWS = "https://finance.yahoo.com/news/rssind
 
 static const cpr::Header headers = {
     {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
-    {"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
-    {"Accept-Language", "en-US,en;q=0.9"},
-    {"Accept-Encoding", "gzip, deflate, br"},
-    {"Connection", "keep-alive"}
 };
 
-namespace news {
+namespace news::rss {
 
-    cpr::Response get_ticker_headlines(const std::vector<std::string>& symbols) {
+    cpr::Response get_yahoo_ticker_headlines(const std::vector<std::string>& symbols) {
         cpr::Parameters params = cpr::Parameters{{"s", misc::join(symbols, ',')}, {"region", "US"}, {"lang", "en-US"}};
         return cpr::Get(cpr::Url{F_YAHOO + FYAHOO_HEADLINES}, headers, params);
     }
 
-    cpr::Response rss_yahoo_news() { return cpr::Get(cpr::Url{YAHOO_RSS_NEWS}, headers); }
+    cpr::Response rss_yahoo_market_news() { return cpr::Get(cpr::Url{YAHOO_RSS_NEWS}, headers); }
 } // namespace news
