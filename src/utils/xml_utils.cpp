@@ -1,5 +1,6 @@
 #include <iostream>
 #include <pugixml.hpp>
+#include <string>
 
 namespace xml_utils {
 
@@ -13,5 +14,8 @@ namespace xml_utils {
         
         return doc;
     }
-
+    
+    std::string extract_link(const pugi::xml_document& doc) {
+        return doc.child("link").text().as_string();
+    }
 } // namespace xml_utils
