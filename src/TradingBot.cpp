@@ -39,8 +39,8 @@ void run_services_tests() {
     const auto& hist = yahoo.get_hist("PLTR", p1, p2, api::_1d);
     const auto& quote = yahoo.get_quote({"PLTR", "AAPL", "GOOGL"});
     const auto& ticker_news = yahoo.get_ticker_news({"PLTR", "AAPL", "GOOGL"}, 10);
-    const auto& headlines = news::rss::get_yahoo_ticker_headlines({"PLTR", "AAPL", "GOOGL"});
-    const auto& rss_news = news::rss::rss_yahoo_market_news();
+    const auto& headlines = news::yahoo::get_ticker_headlines({"PLTR", "AAPL", "GOOGL"});
+    const auto& rss_news = news::yahoo::rss_market_news();
 
     json_utils::write_cache("data/history.json", json::parse(hist.text));
     json_utils::write_cache("data/quote.json", json::parse(quote.text));
@@ -62,8 +62,8 @@ void run_collectors_tests() {
     const auto& hist = yahoo.get_hist("PLTR", p1, p2, api::_1d);
     const auto& quote = yahoo.get_quote({"PLTR", "AAPL", "GOOGL"});
     const auto& ticker_news = yahoo.get_ticker_news({"PLTR", "AAPL", "GOOGL"}, 10);
-    const auto& headlines = news::rss::get_yahoo_ticker_headlines({"PLTR", "AAPL", "GOOGL"});
-    const auto& rss_news = news::rss::rss_yahoo_market_news();
+    const auto& headlines = news::yahoo::get_ticker_headlines({"PLTR", "AAPL", "GOOGL"});
+    const auto& rss_news = news::yahoo::rss_market_news();
 
     cout << "Historical data test: " << hist.status_line << endl;
     cout << "Quote data test: " << quote.status_line << endl;

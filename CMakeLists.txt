@@ -21,6 +21,8 @@ set(CURL_ZLIB OFF)
 
 include(FetchContent)
 
+
+
 FetchContent_Declare(cpr
     GIT_REPOSITORY https://github.com/libcpr/cpr.git
     GIT_TAG 1.10.5
@@ -29,11 +31,14 @@ FetchContent_Declare(json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG v3.11.3
 )
-FetchContent_Declare(
-    pugixml
+FetchContent_Declare(pugixml
     GIT_REPOSITORY https://github.com/zeux/pugixml.git
     GIT_TAG        v1.14
 )
+# set(USE_TLS      ON  CACHE BOOL "" FORCE)
+# set(USE_OPEN_SSL ON  CACHE BOOL "" FORCE)
+# set(USE_MBED_TLS OFF CACHE BOOL "" FORCE)
+# set(USE_ZLIB OFF CACHE BOOL "" FORCE)
 
 # FetchContent_Declare(ixwebsocket
 #     GIT_REPOSITORY https://github.com/machinezone/IXWebSocket.git
@@ -43,27 +48,24 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(
     cpr
     json
-    #ixwebsocket
     pugixml
+    # ixwebsocket
 )
 
 add_executable(TradingBot
     src/TradingBot.cpp
 
     # market
-    src/services/collectors/market/market.h
     src/services/collectors/market/Yahoo.cpp
 
     # news
-    src/services/collectors/news/news.h
     src/services/collectors/news/rss.cpp
     # src/services/collectors/news/wss.cpp
     # src/services/collectors/news/greed.cpp
-    # src/services/collectors/news/cnbc.cpp
+    src/services/collectors/news/yahoo_rss.cpp
     # src/services/collectors/news/Article.cpp
 
     # utils
-    src/utils/utils.h
     src/utils/json_utils.cpp
     src/utils/datetime.cpp
     src/utils/misc.cpp
@@ -73,8 +75,8 @@ add_executable(TradingBot
 target_link_libraries(TradingBot PRIVATE
     cpr::cpr
     nlohmann_json::nlohmann_json
-    # ixwebsocket::ixwebsocket
-    pugixml
+    pugixml::pugixml
+    # ixwebsocket
 )
 
 target_include_directories(TradingBot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
