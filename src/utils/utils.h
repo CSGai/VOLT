@@ -7,19 +7,23 @@
 using json = nlohmann::json;
 
 namespace dt_utils {
-    void unix2datetime_gmt(time_t* unix_tstamp, tm* dt);
-    void unix2datetime_local(time_t* unix_tstamp, tm* dt);
-
-    void datetime2unix(tm* dt, time_t* unix_tstamp);
-} // namespace dt
+    /// prase rfc822 and rfc3339 to a unix timestamp
+    time_t parse_rfc(const std::string& dateStr);
+} // namespace dt_utils
 namespace json_utils {
+    /// write json cache to path
     void write_cache(const std::filesystem::path& path, const json& data);
+    /// read json cache at path
     json read_json(const std::filesystem::path& path);
     json test_json();
-} // namespace _json
+} // namespace json_utils
 namespace xml_utils {
+    /// pugi based parsing for string to xml
     pugi::xml_document parse(const std::string& text);
 }
 namespace misc {
-    std::string join(const std::vector<std::string>& symbols, const char& delimiter);
+    /// join string on delimiter
+    std::string str_join(const std::vector<std::string>& symbols, const char& delimiter);
+    /// remove substring from string
+    std::string str_remove(std::string str, const std::string& sub);
 }

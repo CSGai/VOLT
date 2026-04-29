@@ -2,6 +2,7 @@
 #include "utils/utils.h"
 #include <cpr/cpr.h>
 
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -56,7 +57,7 @@ namespace api {
         return res;
     }
 
-    cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, const int& news_count) {
+    cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, int news_count) {
         cpr::Parameters params = cpr::Parameters{{"q", misc::join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
         return Get(host + QYAHOO_SEARCH, params);
     }
@@ -101,12 +102,10 @@ namespace api {
             std::cout << "FAILED " << base_url << " HIST: " << r.status_line << std::endl;
         }
 
-        // Better error handling instead of NULL
-        throw std::runtime_error("All Yahoo Finance endpoints failed");
+        std::cerr << "All Yahoo Finance endpoints failed";
+        return NULL;
     }
 
 
 
 } // namespace api
-
-namespace news {}
