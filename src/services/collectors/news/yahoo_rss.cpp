@@ -12,7 +12,7 @@ static const cpr::Header headers = {
 namespace news::yahoo {
 
     cpr::Response get_ticker_headlines(const std::vector<std::string>& symbols) {
-        cpr::Parameters params = cpr::Parameters{{"s", misc::join(symbols, ',')}, {"region", "US"}, {"lang", "en-US"}};
+        cpr::Parameters params = cpr::Parameters{{"s", misc::str_join(symbols, ',')}, {"region", "US"}, {"lang", "en-US"}};
         return cpr::Get(cpr::Url{F_YAHOO}, headers, params);
     }
 
