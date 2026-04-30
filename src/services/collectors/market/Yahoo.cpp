@@ -48,7 +48,7 @@ namespace api {
             get_crumb();
         }
 
-        cpr::Parameters params = cpr::Parameters{{"symbols", misc::str_join(symbols, ',')}, {"crumb", this->crumb}};
+        cpr::Parameters params = cpr::Parameters{{"symbols", utils::misc::str_join(symbols, ',')}, {"crumb", this->crumb}};
         cpr::Response res = Get(host + QYAHOO_QUOTE, params);
         if (res.status_code != 200) {
             this->crumb = get_crumb();
@@ -58,7 +58,7 @@ namespace api {
     }
 
     cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, int news_count) {
-        cpr::Parameters params = cpr::Parameters{{"q", misc::str_join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
+        cpr::Parameters params = cpr::Parameters{{"q", utils::misc::str_join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
         return Get(host + QYAHOO_SEARCH, params);
     }
 

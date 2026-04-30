@@ -10,7 +10,6 @@ namespace news {
     struct Article {
             std::string title;
             std::string url;
-            std::string description;
             std::string content;
             std::string publisher;
             time_t published_at;
@@ -38,13 +37,13 @@ namespace news {
             cpr::Response get_rss(cpr::Url link);
 
             /// parse ttl tag and sets to value, if value outside of range 0-60, default
-            int parse_ttl(const char* ttl_str);
+            int parse_ttl(const std::string& ttl_str);
 
             /// parse xml and extract wanted information into articles
             std::vector<news::Article> parse_rss(const cpr::Response& rss_res);
 
             /// crawl through at retrieve the actual article itself from link
-            // std::string crawl_article(std::string link);
+            std::string crawl_article(const std::string& link);
     };
 } // namespace news
 

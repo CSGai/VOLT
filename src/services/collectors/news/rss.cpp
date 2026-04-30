@@ -36,7 +36,7 @@ namespace news {
             cpr::Response res = session.Get();
             if (res.status_code == 200) {
                 // check for <ttl> tag. if doesn't exist, default
-                auto doc = xml_utils::parse(res.text);
+                utils::markup::XmlDoc doc(res.text);
                 auto channel = doc.child("rss").child("channel");
                 int ttl = parse_ttl(channel.child_value("ttl"));
                 result[res.url.str()] = ttl;
@@ -55,8 +55,8 @@ namespace news {
     }
 
     // parse ttl value
-    int Rss::parse_ttl(const char* ttl_str) {
-        if (!ttl_str || ttl_str[0] == '\0') return default_refresh_rate;
+    int Rss::parse_ttl(const std::string& ttl_str) {
+        if (ttl_str.empty() || ttl_str[0] == '\0') return default_refresh_rate;
         int ttl = std::stoi(ttl_str);
         if (ttl <= 0) return default_refresh_rate;
         // cap at 1 hour
@@ -67,11 +67,11 @@ namespace news {
     // parse xml and extract wanted information into articles
     std::vector<news::Article> Rss::parse_rss(const cpr::Response& rss_res) {
 
-        std::string domain = misc::str_remove(rss_res.url.str(), "https://");
-        domain = misc::str_remove(domain, "http://");
+        std::string domain = utils::misc::str_remove(rss_res.url.str(), "https://");
+        domain = utils::misc::str_remove(domain, "http://");
         domain = domain.substr(0, domain.find('/'));
 
-        auto xml = xml_utils::parse(rss_res.text);
+        utils::markup::XmlDoc xml(rss_res.text);
 
         // extract articles
         std::vector<news::Article> articles;
@@ -80,10 +80,11 @@ namespace news {
             news::Article article;
             article.title = item.child_value("title");
             article.url = item.child_value("link");
-            article.description = item.child_value("description");
+            article.content = item.child_value("description");
             // article.content = crawl_article(item.child_value("link"));
-            article.publisher = item.child("source") ? item.child_value("source") : domain;
-            article.published_at = dt_utils::parse_rfc(item.child_value("pubDate"));
+            auto pub = item.child("source");
+            article.publisher = pub.exists() ? pub.value() : domain;
+            article.published_at = utils::datetime::parse_rfc(item.child_value("pubDate"));
             articles.push_back(article);
         }
 
@@ -91,6 +92,10 @@ namespace news {
     }
 
     // crawl rss sublink
-    // std::string Rss::crawl_article(std::string link) {}
+    std::string Rss::crawl_article(const std::string& link) {
+        session.SetUrl(link);
+        std::string html = session.Get().text;
+        return "";
+    }
 
 }; // namespace news
