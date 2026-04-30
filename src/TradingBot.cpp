@@ -42,14 +42,6 @@ void run_collectors_tests() {
     cout << "headlines test: " << headlines.status_line << endl;
     cout << "rss_news test: " << rss_news.status_line << endl;
 
-    json_utils::write_cache("data/history.json", json::parse(hist.text));
-    json_utils::write_cache("data/quote.json", json::parse(quote.text));
-    json_utils::write_cache("data/ticker_news.json", json::parse(ticker_news.text));
-    cout << "writing data/headlines.xml to cache" << endl;
-    xml_utils::parse(headlines.text).save_file("data/headlines.xml");
-    cout << "writing data/rss_news.xml to cache" << endl;
-    xml_utils::parse(rss_news.text).save_file("data/rss_news.xml");
-
     cout << "----test finished----" << endl << endl;
 }
 

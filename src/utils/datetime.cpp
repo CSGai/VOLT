@@ -11,7 +11,7 @@ time_t toUtc(std::tm& t) {
 #endif
 }
 
-namespace dt_utils {
+namespace utils::datetime {
     // parses RFC822/RFC3339
     time_t parse_rfc(const std::string& dateStr) {
         std::tm t = {};

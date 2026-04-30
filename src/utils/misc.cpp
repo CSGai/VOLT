@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 
-namespace misc {
+namespace utils::misc {
     std::string str_join(const std::vector<std::string>& symbols, const char& delimiter) {
         // concat symbols with delimiter
         std::string str_symbols;

@@ -1,29 +1,75 @@
 #pragma once
 #include <ctime>
-#include <filesystem>
+#include <libxml/HTMLparser.h>
+#include <libxml/tree.h>
 #include <nlohmann/json.hpp>
-#include <pugixml.hpp>
 
 using json = nlohmann::json;
 
-namespace dt_utils {
+namespace utils::datetime {
     /// prase rfc822 and rfc3339 to a unix timestamp
     time_t parse_rfc(const std::string& dateStr);
-} // namespace dt_utils
-namespace json_utils {
-    /// write json cache to path
-    void write_cache(const std::filesystem::path& path, const json& data);
-    /// read json cache at path
-    json read_json(const std::filesystem::path& path);
-    json test_json();
-} // namespace json_utils
-namespace xml_utils {
-    /// pugi based parsing for string to xml
-    pugi::xml_document parse(const std::string& text);
-}
-namespace misc {
+} // namespace utils::datetime
+
+namespace utils::markup {
+    class XmlNode {
+        public:
+            XmlNode(xmlNode* n = nullptr);
+
+            XmlNode child(const char* name) const;
+            std::vector<XmlNode> children(const char* name) const;
+
+            std::string value() const;
+            std::string child_value(const char* name) const;
+
+            bool exists() const;
+
+        private:
+            xmlNode* node;
+    };
+
+    class XmlDoc {
+        public:
+            XmlDoc(const std::string& xml);
+            ~XmlDoc();
+
+            XmlNode child(const char* name) const;
+
+        private:
+            xmlDocPtr doc;
+    };
+
+    class HtmlNode {
+        public:
+            HtmlNode(xmlNode* n = nullptr);
+
+            HtmlNode child(const char* name) const;
+            std::vector<HtmlNode> children(const char* name) const;
+
+            std::string value() const;
+
+            bool exists() const;
+
+        private:
+            xmlNode* node;
+    };
+
+    class HtmlDoc {
+        public:
+            HtmlDoc(const std::string& html);
+            ~HtmlDoc();
+
+            HtmlNode child(const char* name) const;
+
+        private:
+            htmlDocPtr doc;
+    };
+
+} // namespace utils::markup
+
+namespace utils::misc {
     /// join string on delimiter
     std::string str_join(const std::vector<std::string>& symbols, const char& delimiter);
     /// remove substring from string
     std::string str_remove(std::string str, const std::string& sub);
-}
+} // namespace utils::misc
