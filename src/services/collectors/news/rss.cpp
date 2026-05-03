@@ -2,6 +2,7 @@
 #include "utils/utils.h"
 #include <cpr/cpr.h>
 #include <iostream>
+#include <pugixml.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -36,7 +37,8 @@ namespace news {
             cpr::Response res = session.Get();
             if (res.status_code == 200) {
                 // check for <ttl> tag. if doesn't exist, default
-                utils::markup::XmlDoc doc(res.text);
+                pugi::xml_document doc;
+                doc.load_string(res.text.c_str());
                 auto channel = doc.child("rss").child("channel");
                 int ttl = parse_ttl(channel.child_value("ttl"));
                 result[res.url.str()] = ttl;
@@ -70,8 +72,8 @@ namespace news {
         std::string domain = utils::misc::str_remove(rss_res.url.str(), "https://");
         domain = utils::misc::str_remove(domain, "http://");
         domain = domain.substr(0, domain.find('/'));
-
-        utils::markup::XmlDoc xml(rss_res.text);
+        pugi::xml_document xml;
+        xml.load_string(rss_res.text.c_str());
 
         // extract articles
         std::vector<news::Article> articles;
@@ -83,7 +85,7 @@ namespace news {
             article.content = item.child_value("description");
             // article.content = crawl_article(item.child_value("link"));
             auto pub = item.child("source");
-            article.publisher = pub.exists() ? pub.value() : domain;
+            article.publisher = pub ? pub.child_value() : domain;
             article.published_at = utils::datetime::parse_rfc(item.child_value("pubDate"));
             articles.push_back(article);
         }

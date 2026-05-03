@@ -62,21 +62,12 @@ FetchContent_Declare(
 )
 
 # ========================
-# libxml2
+# pugixml
 # ========================
-set(LIBXML2_WITH_ICONV OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_ICU OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_PYTHON OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_TESTS OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_PROGRAMS OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_ZLIB OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_LZMA OFF CACHE BOOL "" FORCE)
-set(LIBXML2_WITH_THREADS OFF CACHE BOOL "" FORCE)
-
 FetchContent_Declare(
-    libxml2
-    GIT_REPOSITORY https://github.com/GNOME/libxml2.git
-    GIT_TAG v2.12.0
+    pugixml
+    GIT_REPOSITORY https://github.com/zeux/pugixml.git
+    GIT_TAG v1.14
 )
 
 # ========================
@@ -85,7 +76,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(
     cpr
     json
-    libxml2
+    pugixml
 )
 
 # ========================
@@ -103,7 +94,6 @@ add_executable(TradingBot
     # utils
     src/utils/datetime.cpp
     src/utils/misc.cpp
-    src/utils/markup.cpp
 )
 
 target_include_directories(TradingBot PRIVATE
@@ -116,14 +106,13 @@ target_include_directories(TradingBot PRIVATE
 target_link_libraries(TradingBot PRIVATE
     cpr::cpr
     nlohmann_json::nlohmann_json
-    LibXml2::LibXml2
+    pugixml::pugixml
 )
 
 # ========================
 # Platform fixes
 # ========================
 if(MSVC)
-    target_compile_definitions(TradingBot PRIVATE LIBXML_STATIC)
     target_compile_options(TradingBot PRIVATE /wd4267)
 endif()
 
