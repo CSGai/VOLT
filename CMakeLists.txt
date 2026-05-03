@@ -89,11 +89,12 @@ add_executable(TradingBot
     src/services/collectors/market/Yahoo.cpp
 
     # news
-    src/services/collectors/news/rss.cpp
+    src/services/collectors/news/Rss.cpp
     src/services/collectors/news/yahoo_rss.cpp
     # utils
     src/utils/datetime.cpp
     src/utils/misc.cpp
+    src/utils/Scheduler.cpp
 )
 
 target_include_directories(TradingBot PRIVATE

@@ -5,7 +5,6 @@
 #include <pugixml.hpp>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 constexpr int default_refresh_rate = 15;
@@ -20,9 +19,27 @@ namespace news {
         set_refresh_rates();
     }
 
+    void Rss::run(int interval, std::string cache) {
+        // call and process data from get_rss based on intervals
+        const auto& urls = this->refresh_rates[interval];
+
+        std::vector<cpr::AsyncWrapper<cpr::Response>> futures;
+        futures.reserve(urls.size());
+        
+        for (const auto& url : urls) futures.emplace_back(get_rss(url));
+        
+        // write data to cache
+        for (auto& f : futures) {
+            auto result = f.get();
+            ///////
+        }
+    }
+
     void Rss::print_refresh_rates() {
-        for (const auto& [url, ttl] : this->refresh_rates) {
-            std::cout << url << ": " << ttl << "\n";
+        for (const auto& [ttl, urls] : this->refresh_rates) {
+            for (const auto& url : urls) {
+                std::cout << ttl << ": " << url << "\n";
+            }
         }
     }
 
@@ -45,18 +62,16 @@ namespace news {
             }));
         }
 
-        std::unordered_map<std::string, int> result;
+        std::unordered_map<int, std::vector<std::string>> result;
         for (auto& f : futures) {
             auto [url, ttl] = f.get();
-            result[url] = ttl;
+            result[ttl].emplace_back(url);
         }
         this->refresh_rates = std::move(result);
     }
 
     // sync wrapper around get_rss; exists only as a test seam for the 304 path
-    cpr::Response Rss::fetch_sync(cpr::Url link) {
-        return get_rss(link).get();
-    }
+    cpr::Response Rss::fetch_sync(cpr::Url link) { return get_rss(link).get(); }
 
     // async fetch with conditional headers (ETag / If-Modified-Since)
     cpr::AsyncWrapper<cpr::Response> Rss::get_rss(cpr::Url link) {
