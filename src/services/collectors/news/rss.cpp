@@ -5,16 +5,13 @@
 #include <pugixml.hpp>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 constexpr int default_refresh_rate = 15;
 
 namespace news {
-    Rss::Rss() {
-        this->session = cpr::Session();
-        this->session.SetUserAgent("Mozilla/5.0");
-        // add header for rss change check
-    }
+    static const cpr::Header default_headers = {{"User-Agent", "Mozilla/5.0"}};
 
     void Rss::subscribe(const std::vector<std::string>& rss_links) {
         for (const std::string& link : rss_links) {
@@ -29,31 +26,66 @@ namespace news {
         }
     }
 
-    // iterate over rss subscriptions and sends get ttl respectively
+    // fire all TTL probes in parallel, then collect
     void Rss::set_refresh_rates() {
-        std::unordered_map<std::string, int> result;
+        std::vector<cpr::AsyncWrapper<std::pair<std::string, int>>> futures;
+        futures.reserve(this->rss_links.size());
+
         for (const cpr::Url& link : this->rss_links) {
-            session.SetUrl(link);
-            cpr::Response res = session.Get();
-            if (res.status_code == 200) {
-                // check for <ttl> tag. if doesn't exist, default
+            futures.push_back(cpr::async([this, link]() -> std::pair<std::string, int> {
+                cpr::Response res = cpr::Get(link, default_headers);
+                if (res.status_code != 200) {
+                    std::cerr << "failed to reach RSS: " << link.str();
+                    return {link.str(), default_refresh_rate};
+                }
                 pugi::xml_document doc;
                 doc.load_string(res.text.c_str());
                 auto channel = doc.child("rss").child("channel");
-                int ttl = parse_ttl(channel.child_value("ttl"));
-                result[res.url.str()] = ttl;
-            } else
-                std::cerr << "failed to reach RSS: " << link.str();
+                return {res.url.str(), parse_ttl(channel.child_value("ttl"))};
+            }));
         }
-        this->refresh_rates = result;
+
+        std::unordered_map<std::string, int> result;
+        for (auto& f : futures) {
+            auto [url, ttl] = f.get();
+            result[url] = ttl;
+        }
+        this->refresh_rates = std::move(result);
     }
 
-    // get specific subscription rss
-    cpr::Response Rss::get_rss(cpr::Url link) {
-        session.SetUrl(link);
-        cpr::Response res = session.Get();
-        if (res.status_code != 200) std::cerr << "failed to reach RSS: " << link.str();
-        return res;
+    // sync wrapper around get_rss; exists only as a test seam for the 304 path
+    cpr::Response Rss::fetch_sync(cpr::Url link) {
+        return get_rss(link).get();
+    }
+
+    // async fetch with conditional headers (ETag / If-Modified-Since)
+    cpr::AsyncWrapper<cpr::Response> Rss::get_rss(cpr::Url link) {
+        return cpr::async([this, link]() {
+            cpr::Header headers = default_headers;
+            {
+                std::lock_guard<std::mutex> lk(cache_mutex);
+                auto cached = cache_validators.find(link.str());
+                if (cached != cache_validators.end()) {
+                    if (!cached->second.etag.empty()) headers["If-None-Match"] = cached->second.etag;
+                    if (!cached->second.last_modified.empty()) headers["If-Modified-Since"] = cached->second.last_modified;
+                }
+            }
+
+            cpr::Response res = cpr::Get(link, headers);
+
+            if (res.status_code == 200) {
+                std::lock_guard<std::mutex> lk(cache_mutex);
+                CacheValidators& v = cache_validators[link.str()];
+                auto et = res.header.find("ETag");
+                if (et != res.header.end()) v.etag = et->second;
+                auto lm = res.header.find("Last-Modified");
+                if (lm != res.header.end()) v.last_modified = lm->second;
+            } else if (res.status_code != 304) {
+                std::cerr << "failed to reach RSS: " << link.str();
+            }
+
+            return res;
+        });
     }
 
     // parse ttl value
@@ -69,9 +101,11 @@ namespace news {
     // parse xml and extract wanted information into articles
     std::vector<news::Article> Rss::parse_rss(const cpr::Response& rss_res) {
 
-        std::string domain = utils::misc::str_remove(rss_res.url.str(), "https://");
-        domain = utils::misc::str_remove(domain, "http://");
-        domain = domain.substr(0, domain.find('/'));
+        std::string url = rss_res.url.str();
+        // get '/' after initial :// index
+        size_t path = url.find('/', url.find("://") + 3);
+        std::string domain = (path == std::string::npos) ? url + "/" : url.substr(0, path + 1);
+
         pugi::xml_document xml;
         xml.load_string(rss_res.text.c_str());
 
@@ -94,10 +128,10 @@ namespace news {
     }
 
     // crawl rss sublink
-    std::string Rss::crawl_article(const std::string& link) {
-        session.SetUrl(link);
-        std::string html = session.Get().text;
-        return "";
-    }
+    // std::string Rss::crawl_article(const std::string& link) {
+    //     session.SetUrl(link);
+    //     std::string html = session.Get().text;
+    //     return "";
+    // }
 
 }; // namespace news
