@@ -25,11 +25,14 @@ namespace news {
             void print_refresh_rates();
 
             /// read-only access to current per-feed refresh-rate map
-            const std::unordered_map<std::string, int>& get_refresh_rates() const { return refresh_rates; }
+            const std::unordered_map<int, std::vector<std::string>>& get_refresh_rates() const { return refresh_rates; }
 
             /// sync wrapper around get_rss, exposed only so tests can verify the
             /// conditional-GET / 304 path; production code goes through scheduled_polling
             cpr::Response fetch_sync(cpr::Url link);
+
+            /// runs get rss and outputs to cache based on interval
+            void run(int interval, std::string cache = "/cache/");
 
         private:
             struct CacheValidators {
@@ -38,7 +41,7 @@ namespace news {
             };
 
             std::vector<cpr::Url> rss_links;
-            std::unordered_map<std::string, int> refresh_rates;
+            std::unordered_map<int, std::vector<std::string>> refresh_rates;
             std::unordered_map<std::string, CacheValidators> cache_validators;
             std::mutex cache_mutex;
 
@@ -54,9 +57,6 @@ namespace news {
 
             /// parse xml and extract wanted information into articles
             std::vector<news::Article> parse_rss(const cpr::Response& rss_res);
-
-            /// gets data from RSS based on ttl
-            void scheduled_polling();
 
             /// crawl through at retrieve the actual article itself from link
             // std::string crawl_article(const std::string& link);

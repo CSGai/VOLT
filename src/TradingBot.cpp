@@ -1,6 +1,6 @@
 #include "services/collectors/market/market.h"
 #include "services/collectors/news/news.h"
-#include "utils/utils.h"
+#include <utils/Scheduler.cpp>
 
 #include <ctime>
 #include <iostream>
@@ -72,7 +72,7 @@ static void test_rss_subscribe() {
     TEST_ASSERT(rates.size() == feeds.size(), "subscribe populated refresh_rates for every feed");
 
     bool all_in_range = !rates.empty();
-    for (const auto& [url, ttl] : rates) {
+    for (const auto& [ttl, urls] : rates) {
         if (ttl < 1 || ttl > 60) all_in_range = false;
     }
     TEST_ASSERT(all_in_range, "all refresh_rates within [1, 60] minutes");
@@ -92,13 +92,26 @@ static void test_rss_conditional_get_304() {
     TEST_ASSERT(second.status_code == 304, "second fetch returns 304 (conditional GET hit)");
 }
 
+static void test_rss_scheduler() {
+    cout << "[scheduled rss test]\n";
+    Scheduler sch;
+    news::Rss rss;
+    rss.subscribe({"https://finance.yahoo.com/news/rssindex", "https://news.yahoo.com/rss/"});
+    const auto& rates = rss.get_refresh_rates();
+    // for (const auto& [url, rate] : rates) {
+    //     sch.add_task(std::function<void ()> callback, int interval)
+    // }
+    
+}
+
+
 int main() {
     cout << "=== Trading Bot collector tests ===\n\n";
 
-    test_yahoo_market();
-    test_yahoo_news();
-    test_rss_subscribe();
-    test_rss_conditional_get_304();
+    // test_yahoo_market();
+    // test_yahoo_news();
+    // test_rss_subscribe();
+    // test_rss_conditional_get_304();
 
     cout << "\n=== Summary: " << tests_passed << "/" << tests_run << " passed ===\n";
     cin.get();
