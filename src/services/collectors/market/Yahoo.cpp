@@ -1,5 +1,5 @@
-#include "market.h"
-#include "utils/utils.h"
+#include "market.hpp"
+#include "utils/utils.hpp"
 #include <cpr/cpr.h>
 
 #include <cstddef>

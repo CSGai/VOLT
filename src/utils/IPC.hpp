@@ -1,0 +1,5 @@
+enum Destination {
+    TRAINING,
+    INFERENCE
+};
+
