@@ -1,5 +1,5 @@
-#include "news.h"
-#include "utils/utils.h"
+#include "news.hpp"
+#include "utils/utils.hpp"
 #include <cpr/cpr.h>
 #include <string>
 

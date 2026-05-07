@@ -1,6 +1,5 @@
-#include "news.h"
-#include "utils/protocol.h"
-#include "utils/utils.h"
+#include "news.hpp"
+#include "utils/utils.hpp"
 #include <cpr/cpr.h>
 #include <iostream>
 #include <pugixml.hpp>
@@ -33,6 +32,7 @@ namespace news {
         for (auto& f : futures) {
             auto result = f.get();
             result.text;
+            
         }
     }
 

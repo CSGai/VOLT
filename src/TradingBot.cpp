@@ -1,5 +1,5 @@
-#include "services/collectors/market/market.h"
-#include "services/collectors/news/news.h"
+#include "services/collectors/market/market.hpp"
+#include "services/collectors/news/news.hpp"
 #include <utils/Scheduler.cpp>
 
 #include <ctime>

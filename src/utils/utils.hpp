@@ -1,8 +1,7 @@
 #pragma once
 #include <ctime>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
+#include <string>
+#include <vector>
 
 namespace utils::datetime {
     /// prase rfc822 and rfc3339 to a unix timestamp

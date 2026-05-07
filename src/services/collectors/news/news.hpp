@@ -1,5 +1,5 @@
 #pragma once
-#include "utils/protocol.h"
+#include "utils/IPC.hpp"
 #include <cpr/async.h>
 #include <mutex>
 #include <string>
@@ -34,7 +34,7 @@ namespace news {
             /// runs get rss and outputs to cache based on interval
             /// pipeline 0x01 = training
             /// pipeline 1x02 = runtime inference
-            void run(int interval, Destination = Destination::TRAINING);
+            void run(int interval, Destination dest = Destination::TRAINING);
 
         private:
             struct CacheValidators {
