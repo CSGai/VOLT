@@ -1,7 +1,6 @@
 #pragma once
-#include "cpr/cprtypes.h"
+#include "utils/protocol.h"
 #include <cpr/async.h>
-#include <cpr/response.h>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -15,6 +14,7 @@ namespace news {
             std::string publisher;
             time_t published_at;
     };
+    
 
     class Rss {
         public:
@@ -32,7 +32,9 @@ namespace news {
             cpr::Response fetch_sync(cpr::Url link);
 
             /// runs get rss and outputs to cache based on interval
-            void run(int interval, std::string cache = "/cache/");
+            /// pipeline 0x01 = training
+            /// pipeline 1x02 = runtime inference
+            void run(int interval, Destination = Destination::TRAINING);
 
         private:
             struct CacheValidators {

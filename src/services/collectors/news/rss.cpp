@@ -1,4 +1,5 @@
 #include "news.h"
+#include "utils/protocol.h"
 #include "utils/utils.h"
 #include <cpr/cpr.h>
 #include <iostream>
@@ -19,7 +20,7 @@ namespace news {
         set_refresh_rates();
     }
 
-    void Rss::run(int interval, std::string cache) {
+    void Rss::run(int interval, Destination) {
         // call and process data from get_rss based on intervals
         const auto& urls = this->refresh_rates[interval];
 
@@ -31,7 +32,7 @@ namespace news {
         // write data to cache
         for (auto& f : futures) {
             auto result = f.get();
-            ///////
+            result.text;
         }
     }
 

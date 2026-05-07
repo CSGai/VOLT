@@ -17,9 +17,11 @@ class Scheduler {
             sort_tasks();
             for (const auto& task : tasks_) {
                 threads_.emplace_back([task](std::stop_token st) {
+                    auto next = std::chrono::steady_clock::now() + task.interval;
                     while (!st.stop_requested()) {
                         task.func();
-                        std::this_thread::sleep_for(task.interval);
+                        std::this_thread::sleep_until(next);
+                        next += task.interval;
                     }
                 });
             }
