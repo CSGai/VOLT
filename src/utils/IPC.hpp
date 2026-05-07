@@ -2,4 +2,3 @@ enum Destination {
     TRAINING,
     INFERENCE
 };
-

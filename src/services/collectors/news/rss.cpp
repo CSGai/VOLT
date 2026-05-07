@@ -31,8 +31,8 @@ namespace news {
         // write data to cache
         for (auto& f : futures) {
             auto result = f.get();
-            result.text;
-            
+            // result.text;
+            // ADD socket based IPC
         }
     }
 
