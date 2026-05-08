@@ -71,13 +71,50 @@ FetchContent_Declare(
 )
 
 # ========================
+# mbedTLS (TLS backend for ixwebsocket)
+# ========================
+set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
+set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    mbedtls
+    GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+    GIT_TAG v3.6.2
+)
+
+# ========================
+# ixwebsocket (cross-platform WSS client)
+# ========================
+set(USE_TLS ON CACHE BOOL "" FORCE)
+set(USE_MBED_TLS ON CACHE BOOL "" FORCE)
+set(USE_OPEN_SSL OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB OFF CACHE BOOL "" FORCE)
+set(IXWEBSOCKET_INSTALL OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    ixwebsocket
+    GIT_REPOSITORY https://github.com/machinezone/IXWebSocket.git
+    GIT_TAG v11.4.4
+)
+
+# ========================
 # Fetch deps
 # ========================
 FetchContent_MakeAvailable(
     cpr
     json
     pugixml
+    mbedtls
 )
+
+# Short-circuit ixwebsocket's find_package(MbedTLS REQUIRED) by pre-populating
+# the vars from the mbedtls FetchContent targets before bringing in ixwebsocket.
+set(MBEDTLS_FOUND TRUE)
+set(MBEDTLS_INCLUDE_DIRS "${mbedtls_SOURCE_DIR}/include")
+set(MBEDTLS_LIBRARIES mbedtls mbedx509 mbedcrypto)
+
+FetchContent_MakeAvailable(ixwebsocket)
 
 # ========================
 # Executable
@@ -87,6 +124,7 @@ add_executable(TradingBot
 
     # market
     src/services/collectors/market/Yahoo.cpp
+    src/services/collectors/market/wss.cpp
 
     # news
     src/services/collectors/news/Rss.cpp
@@ -108,6 +146,7 @@ target_link_libraries(TradingBot PRIVATE
     cpr::cpr
     nlohmann_json::nlohmann_json
     pugixml::pugixml
+    ixwebsocket
 )
 
 # ========================
