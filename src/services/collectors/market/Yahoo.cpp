@@ -25,12 +25,12 @@ namespace api {
     Yahoo::Yahoo() {
 
         // session setup
-        this->host = test_urls();
-        this->session = cpr::Session();
-        this->session.SetUserAgent("Mozilla/5.0");
+        host = test_urls();
+        session = cpr::Session();
+        session.SetUserAgent("Mozilla/5.0");
         // grab cookies for step 1 authentication
-        this->session.SetUrl("https://fc.yahoo.com");
-        this->session.Get();
+        session.SetUrl("https://fc.yahoo.com");
+        session.Get();
     }
 
     // get ticker's historical data
@@ -65,24 +65,24 @@ namespace api {
     // session get
     cpr::Response Yahoo::Get(const std::string& url, cpr::Parameters params, cpr::Header headers) {
         // session set variables
-        if (!headers.empty()) this->session.SetHeader(headers);
+        if (!headers.empty()) session.SetHeader(headers);
 
-        this->session.SetUrl(cpr::Url{url});
-        this->session.SetParameters(params);
+        session.SetUrl(cpr::Url{url});
+        session.SetParameters(params);
 
-        return this->session.Get();
+        return session.Get();
     }
 
     // get crumbs for authorization
     std::string Yahoo::get_crumb() {
 
-        this->session.SetUrl(cpr::Url{host + QYAHOO_CRUMBS});
-        this->session.SetParameters({});
+        session.SetUrl(cpr::Url{host + QYAHOO_CRUMBS});
+        session.SetParameters({});
 
-        const cpr::Response crumb_response = this->session.Get();
+        const cpr::Response crumb_response = session.Get();
 
-        this->crumb = crumb_response.text;
-        return this->crumb;
+        crumb = crumb_response.text;
+        return crumb;
     }
 
     // test API urls Query1/Query2
