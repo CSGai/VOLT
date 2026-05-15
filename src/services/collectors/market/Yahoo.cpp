@@ -1,8 +1,6 @@
 #include "market.hpp"
 #include "utils/utils.hpp"
-#include <cpr/cpr.h>
 
-#include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -20,10 +18,11 @@ static const std::string QYAHOO_CRUMBS = "/v1/test/getcrumb";
 // newsCount -> amount of articles to get
 static const std::string QYAHOO_SEARCH = "/v1/finance/search";
 
+
 namespace api {
 
-    Yahoo::Yahoo() {
 
+    Yahoo::Yahoo() {
         // session setup
         host = test_urls();
         session = cpr::Session();
@@ -103,7 +102,7 @@ namespace api {
         }
 
         std::cerr << "All Yahoo Finance endpoints failed";
-        return NULL;
+        return {};
     }
 
 

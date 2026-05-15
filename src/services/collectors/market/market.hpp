@@ -1,10 +1,10 @@
 #pragma once
 
-#include "cpr/parameters.h"
-#include "cpr/response.h"
 #include <cpr/cpr.h>
+#include <ctime>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace api {
 
@@ -12,10 +12,10 @@ namespace api {
     // m -> minutes
     enum intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
 
-    static const std::unordered_map<api::intervals, std::string>& INTERVAL_MAP = {
+    inline const std::unordered_map<api::intervals, std::string> INTERVAL_MAP = {
         {api::_1m, "1m"},   {api::_2m, "2m"}, {api::_5m, "5m"}, {api::_15m, "15m"}, {api::_30m, "30m"}, {api::_60m, "60m"},
         {api::_90m, "90m"}, {api::_1d, "1d"}, {api::_5d, "5d"}, {api::_1wk, "1wk"}, {api::_1mo, "1mo"}, {api::_3mo, "3mo"}};
-
+    
     /// query yahoo api interface
     class Yahoo {
         public:
