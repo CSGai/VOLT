@@ -4,13 +4,18 @@
 #include <vector>
 
 namespace utils::datetime {
-    /// prase rfc822 and rfc3339 to a unix timestamp
-    time_t parse_rfc(const std::string& dateStr);
+
+/// prase rfc822 and rfc3339 to a unix timestamp
+time_t parse_rfc(const std::string& dateStr);
+
 } // namespace utils::datetime
 
 namespace utils::misc {
-    /// join string on delimiter
-    std::string str_join(const std::vector<std::string>& symbols, const char& delimiter);
-    /// remove substring from string
-    std::string str_remove(std::string str, const std::string& sub);
+
+/// join string on delimiter
+std::string str_join(const std::vector<std::string>& symbols, const char& delimiter);
+
+/// remove substring from string
+std::string str_remove(std::string str, const std::string& sub);
+
 } // namespace utils::misc

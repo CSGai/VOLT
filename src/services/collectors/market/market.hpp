@@ -1,44 +1,70 @@
 #pragma once
 
 #include <cpr/cpr.h>
+
 #include <ctime>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+
 namespace api {
 
-    // d -> days
-    // m -> minutes
-    enum intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
+// d -> days
+// m -> minutes
+enum intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
 
-    inline const std::unordered_map<api::intervals, std::string> INTERVAL_MAP = {
-        {api::_1m, "1m"},   {api::_2m, "2m"}, {api::_5m, "5m"}, {api::_15m, "15m"}, {api::_30m, "30m"}, {api::_60m, "60m"},
-        {api::_90m, "90m"}, {api::_1d, "1d"}, {api::_5d, "5d"}, {api::_1wk, "1wk"}, {api::_1mo, "1mo"}, {api::_3mo, "3mo"}};
-    
-    /// query yahoo api interface
-    class Yahoo {
-        public:
-            Yahoo();
-            /// get history endpoint for each ticker at period range
-            cpr::Response get_hist(const std::string& ticker, const time_t& period1, const time_t& period2,
-                                   const api::intervals& interval);
-            /// get current symbols quotes
-            cpr::Response get_quote(const std::vector<std::string>& symbols);
-            /// get news for specific tickers
-            cpr::Response get_ticker_news(const std::vector<std::string>& symbols, int news_count);
+inline const std::unordered_map<api::intervals, std::string> INTERVAL_MAP = {{api::_1m, "1m"},
+                                                                             {api::_2m, "2m"},
+                                                                             {api::_5m, "5m"},
+                                                                             {api::_15m, "15m"},
+                                                                             {api::_30m, "30m"},
+                                                                             {api::_60m, "60m"},
+                                                                             {api::_90m, "90m"},
+                                                                             {api::_1d, "1d"},
+                                                                             {api::_5d, "5d"},
+                                                                             {api::_1wk, "1wk"},
+                                                                             {api::_1mo, "1mo"},
+                                                                             {api::_3mo, "3mo"}};
 
-        private:
-            cpr::Session session;
-            std::string host;
-            std::string crumb;
-            /// gets crumbs for authentication
-            std::string get_crumb();
-            /// general session based get request for authenticated api calls
-            cpr::Response Get(const std::string& url, cpr::Parameters params = cpr::Parameters{}, cpr::Header headers = cpr::Header{});
+/// query yahoo api interface
+class Yahoo {
+public:
+    Yahoo();
+    /// get history endpoint for each ticker at period range
+    cpr::Response get_hist(const std::string& ticker,
+                           const time_t& period1,
+                           const time_t& period2,
+                           const api::intervals& interval);
+    /// get current symbols quotes
+    cpr::Response get_quote(const std::vector<std::string>& symbols);
+    /// get news for specific tickers
+    cpr::Response get_ticker_news(const std::vector<std::string>& symbols, int news_count);
 
-            // util
-            static std::string test_urls();
-    };
+private:
+    cpr::Session session;
+    std::string host;
+    std::string crumb;
+    /// gets crumbs for authentication
+    std::string get_crumb();
+    /// general session based get request for authenticated api calls
+    cpr::Response Get(const std::string& url,
+                      cpr::Parameters params = cpr::Parameters{},
+                      cpr::Header headers = cpr::Header{});
+
+    // util
+    static std::string test_urls();
+};
+
+class TradingView {
+public:
+    TradingView(std::string username="", std::string password="");
+    TradingView();
+private:
+    boolean init = false;
+    cpr::Session session;
+    void init_session();
+    void login(std::string username, std::string password);
+};
 
 }; // namespace api
