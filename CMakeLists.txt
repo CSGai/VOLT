@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.14)
-project(TradingBot LANGUAGES CXX)
+project(TradingBot LANGUAGES C CXX)
 
 # ========================
 # Global settings
@@ -13,24 +13,39 @@ include(FetchContent)
 # Keep all fetched deps static; avoids DLL hell on Windows
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+
 # ========================
 # CPR (HTTP)
 # ========================
-set(CPR_USE_SYSTEM_CURL  OFF CACHE BOOL "" FORCE)
-set(BUILD_CURL_EXE       OFF CACHE BOOL "" FORCE)
-set(CURL_ZLIB            OFF CACHE BOOL "" FORCE)
-
-if(WIN32)
-    set(CURL_USE_SCHANNEL ON  CACHE BOOL "" FORCE)
-    set(CURL_STATICLIB    ON  CACHE BOOL "" FORCE)
-else()
-    set(CURL_USE_OPENSSL  ON  CACHE BOOL "" FORCE)
-endif()
+# set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+# set(BUILD_CURL_EXE      OFF CACHE BOOL "" FORCE)
+# set(CURL_ZLIB           OFF CACHE BOOL "" FORCE)
+# set(CURL_USE_OPENSSL    ON  CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     cpr
     GIT_REPOSITORY https://github.com/libcpr/cpr.git
     GIT_TAG        1.10.5
+)
+
+# ========================
+# IXWebSocket  (TLS via OpenSSL)
+# ========================
+if(WIN32)
+    set(OPENSSL_ROOT_DIR "C:/Program Files/OpenSSL-Win64" CACHE PATH "" FORCE)
+endif()
+
+find_package(OpenSSL REQUIRED)
+
+set(USE_TLS      ON  CACHE BOOL "" FORCE)
+set(USE_OPEN_SSL ON  CACHE BOOL "" FORCE)
+set(USE_MBED_TLS OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB     OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    ixwebsocket
+    GIT_REPOSITORY https://github.com/machinezone/IXWebSocket.git
+    GIT_TAG        v11.4.5
 )
 
 # ========================
@@ -56,49 +71,6 @@ FetchContent_Declare(
     GIT_TAG        v1.14
 )
 
-# ========================
-# MbedTLS  (Windows only — IXWebSocket dep)
-# ========================
-if(WIN32)
-    set(ENABLE_TESTING         OFF CACHE BOOL "" FORCE)
-    set(ENABLE_PROGRAMS        OFF CACHE BOOL "" FORCE)
-    set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
-
-    FetchContent_Declare(
-        mbedtls
-        GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
-        GIT_TAG        v3.5.2
-    )
-    FetchContent_MakeAvailable(mbedtls)
-
-    # Pre-populate FindMbedTLS.cmake cache vars so IXWebSocket's
-    # find_package(MbedTLS REQUIRED) sees them as already resolved.
-    # The bare target names (mbedtls / mbedx509 / mbedcrypto) are valid
-    # CMake targets created by the FetchContent above.
-    set(MBEDTLS_INCLUDE_DIRS "${mbedtls_SOURCE_DIR}/include"
-        CACHE PATH "" FORCE)
-    set(MBEDTLS_LIBRARY   "mbedtls"    CACHE STRING "" FORCE)
-    set(MBEDX509_LIBRARY  "mbedx509"   CACHE STRING "" FORCE)
-    set(MBEDCRYPTO_LIBRARY "mbedcrypto" CACHE STRING "" FORCE)
-endif()
-
-# ========================
-# IXWebSocket
-# ========================
-set(USE_TLS  ON  CACHE BOOL "" FORCE)
-set(USE_ZLIB OFF CACHE BOOL "" FORCE)
-
-if(WIN32)
-    set(USE_MBED_TLS  ON  CACHE BOOL "" FORCE)
-else()
-    set(USE_OPENSSL   ON  CACHE BOOL "" FORCE)
-endif()
-
-FetchContent_Declare(
-    ixwebsocket
-    GIT_REPOSITORY https://github.com/machinezone/IXWebSocket.git
-    GIT_TAG        v11.4.5
-)
 
 # ========================
 # Fetch all deps
@@ -139,6 +111,8 @@ target_link_libraries(TradingBot PRIVATE
     nlohmann_json::nlohmann_json
     pugixml::pugixml
     ixwebsocket::ixwebsocket
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 
 # ========================
