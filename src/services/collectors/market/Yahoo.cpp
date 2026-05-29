@@ -18,7 +18,7 @@ static const std::string QYAHOO_CRUMBS = "/v1/test/getcrumb";
 // newsCount -> amount of articles to get
 static const std::string QYAHOO_SEARCH = "/v1/finance/search";
 
-namespace api {
+namespace market {
 
 Yahoo::Yahoo() {
     // session setup
@@ -34,10 +34,10 @@ Yahoo::Yahoo() {
 cpr::Response Yahoo::get_hist(const std::string& ticker,
                               const time_t& period1,
                               const time_t& period2,
-                              const api::intervals& interval) {
+                              const market::intervals& interval) {
     cpr::Parameters params = cpr::Parameters{{"period1", std::to_string(period1)},
                                              {"period2", std::to_string(period2)},
-                                             {"interval", api::INTERVAL_MAP.at(interval)}};
+                                             {"interval", market::INTERVAL_MAP.at(interval)}};
     return Get(host + QYAHOO_HIST + ticker, params);
 }
 
@@ -88,7 +88,7 @@ std::string Yahoo::get_crumb() {
     return crumb;
 }
 
-// test API urls Query1/Query2
+// test market urls Query1/Query2
 std::string Yahoo::test_urls() {
     // refuses to connect without user-agent
     static const cpr::Header user_agent{{"User-Agent", "Mozilla/5.0"}};
@@ -109,4 +109,4 @@ std::string Yahoo::test_urls() {
     return {};
 }
 
-} // namespace api
+} // namespace market
