@@ -90,6 +90,7 @@ add_executable(TradingBot
 
     src/services/collectors/market/Yahoo.cpp
     src/services/collectors/market/TradingView.cpp
+    src/services/collectors/market/Frame.cpp
 
     src/services/collectors/news/Rss.cpp
     src/services/collectors/news/yahoo_rss.cpp

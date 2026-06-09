@@ -5,10 +5,14 @@
 #include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXWebSocket.h>
 
+#include <atomic>
+#include <cmath>
 #include <iostream>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 using json = nlohmann::json;
@@ -183,9 +187,9 @@ void TradingView::login(std::string username, std::string password) {
 // cache. Watch: one read may hold many frames; missed heartbeat = silent drop; reconnect wipes
 // session IDs.
 
-// currently in anon mode. need to add authenticated session option and potential session cookies
-// make version that works with multiple symbols
-void TradingView::subscribe(std::string target) {
+// anon mode for now; authenticated-session option (sessionid cookie) still TODO.
+// One connection streams every symbol; Feed picks chart-series vs. quote frames.
+void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type) {
     ix::initNetSystem();
 
     ix::WebSocket ws;
@@ -194,28 +198,47 @@ void TradingView::subscribe(std::string target) {
     headers["Origin"] = "https://data.tradingview.com";
     ws.setExtraHeaders(headers);
 
-    const std::string chartSession = genSession("cs_");
-    const std::string symbol = "NASDAQ:AAPL";
-    const std::string timeframe =
-        "1"; // 1-min; MUST be intraday for ext hrs. if premuim can go smaller.
+    const std::string timeframe = "1"; // 1-min; must be intraday for extended hours
     const int barCount = 300;
 
+    std::unordered_map<std::string, std::string> labels; // sds_N -> symbol, for bar output
+    std::unordered_map<std::string, std::map<long, double>> closes; // sds_N -> epoch -> close
     std::atomic<bool> sent{false};
 
+    // bootstrap frames for the chosen feed, sent once the server session is ready
     auto handshake = [&]() {
         if (sent.exchange(true))
             return;
-        std::cout << "[handshake] chart session=" << chartSession << "\n";
+        ws.send(Frame::command("set_auth_token", {"unauthorized_user_token"}));
 
-        // session:"extended" -> include pre/post-market subsessions.
-        json spec = {{"symbol", symbol}, {"adjustment", "splits"}, {"session", "extended"}};
-        std::string symbolArg = "=" + spec.dump();
+        if (type == Feed::Quote) {
+            const std::string qs = genSession("qs_");
+            std::cout << "[handshake] session=" << qs << "\n";
+            ws.send(Frame::command("quote_create_session", {qs}));
+            ws.send(Frame::command("quote_set_fields",
+                                   {qs, "lp", "ch", "chp", "volume", "bid", "ask"}));
+            // quote_add_symbols: session id followed by every symbol, one frame
+            json add = json::array({qs});
+            for (const std::string& sym : symbols)
+                add.push_back(sym);
+            ws.send(Frame::command("quote_add_symbols", add));
+            return;
+        }
 
-        ws.send(command("set_auth_token", {"unauthorized_user_token"}));
-        ws.send(command("chart_create_session", {chartSession, ""}));
-        ws.send(command("resolve_symbol", {chartSession, "sds_sym_1", symbolArg}));
-        ws.send(command("create_series",
-                        {chartSession, "sds_1", "s1", "sds_sym_1", timeframe, barCount, ""}));
+        // Feed::Series — anon tier allows one series per chart session, so open a
+        // fresh chart session per symbol over the same connection.
+        for (size_t i = 0; i < symbols.size(); ++i) {
+            const std::string cs = genSession("cs_");
+            const std::string symId = "sds_sym_" + std::to_string(i);
+            const std::string seriesId = "sds_" + std::to_string(i);
+            // session:"extended" -> include pre/post-market subsessions
+            json spec = {{"symbol", symbols[i]}, {"adjustment", "splits"}, {"session", "extended"}};
+            ws.send(Frame::command("chart_create_session", {cs, ""}));
+            ws.send(Frame::command("resolve_symbol", {cs, symId, "=" + spec.dump()}));
+            ws.send(Frame::command("create_series", {cs, seriesId, "s" + std::to_string(i), symId,
+                                                     timeframe, barCount, ""}));
+            labels[seriesId] = symbols[i];
+        }
     };
 
     ws.setOnMessageCallback([&](const ix::WebSocketMessagePtr& msg) {
@@ -224,42 +247,39 @@ void TradingView::subscribe(std::string target) {
             std::cout << "[open] connected\n";
             break;
 
-        case ix::WebSocketMessageType::Message: {
-            std::cout << "[raw] " << msg->str << "\n";
-
-            for (const std::string& payload : parseFrames(msg->str)) {
-                if (payload.rfind("~h~", 0) == 0) { // heartbeat -> echo
-                    ws.send(frame(payload));
+        case ix::WebSocketMessageType::Message:
+            for (const std::string& payload : Frame::parse(msg->str)) {
+                // echo heartbeat to maintain connection
+                if (Frame::isHeartbeat(payload)) { 
+                    ws.send(Frame::wrap(payload));
                     continue;
                 }
-
+                
                 json j = json::parse(payload, nullptr, false);
                 if (j.is_discarded())
                     continue;
 
-                if (j.contains("session_id") && !sent) { // first server frame
+                // first server frame
+                if (j.contains("session_id") && !sent) { 
                     handshake();
                     continue;
                 }
                 if (!j.contains("m"))
                     continue;
                 const std::string m = j["m"].get<std::string>();
-
-                if (m == "timescale_update" || m == "du") {
-                    // p[1] holds the series map { "sds_1": { "s": [bars] } }
-                    if (j["p"].size() > 1)
-                        TradingView::printBars(j["p"][1]);
-                } else if (m == "symbol_resolved") {
-                    std::cout << "[resolved] " << symbol << "\n";
-                } else if (m == "series_completed") {
-                    std::cout << "[series_completed] initial load done\n";
+                
+                // message type and printing
+                if ((m == "timescale_update" || m == "du") && j["p"].size() > 1) {
+                    printSeries(j["p"][1], labels, closes); // p[1] = { "sds_<i>": { "s": [bars] } }
+                } else if (m == "qsd") {
+                    printQuote(j["p"]);
                 } else if (m == "symbol_error" || m == "series_error" || m == "critical_error" ||
                            m == "protocol_error") {
                     std::cout << "[" << m << "] " << j["p"].dump() << "\n";
                 }
             }
             break;
-        }
+
         case ix::WebSocketMessageType::Error:
             std::cout << "[error] " << msg->errorInfo.reason << "\n";
             break;
@@ -272,47 +292,12 @@ void TradingView::subscribe(std::string target) {
     });
 
     ws.start();
-    std::cout << "Loading " << timeframe << "m extended-hours bars for " << symbol
-              << " — Enter to quit.\n";
+    std::cout << "Streaming " << (type == Feed::Quote ? "quotes" : "series") << " for "
+              << symbols.size() << " symbol(s) — Enter to quit.\n";
     std::cin.get();
 
     ws.stop();
     ix::uninitNetSystem();
-}
-
-// make all helper functions into a proper class later with proper parsing
-std::vector<std::string> TradingView::parseFrames(const std::string& data) {
-    std::vector<std::string> frames;
-    size_t pos = 0;
-    while (pos + 3 <= data.size() && data.compare(pos, 3, "~m~") == 0) {
-        pos += 3;                           // skip leading ~m~
-        size_t end = data.find("~m~", pos); // find length delimiter
-        if (end == std::string::npos)
-            break;
-        int len = 0;
-        try {
-            len = std::stoi(data.substr(pos, end - pos));
-        } catch (...) {
-            break;
-        }
-        pos = end + 3; // skip to payload start
-        if (pos + len > data.size())
-            break;
-        frames.push_back(data.substr(pos, len));
-        pos += len;
-    }
-    return frames;
-}
-
-std::string TradingView::command(const std::string& method, const json& params) {
-    json j;
-    j["m"] = method;
-    j["p"] = params;
-    return frame(j.dump());
-}
-
-std::string TradingView::frame(const std::string& payload) {
-    return "~m~" + std::to_string(payload.size()) + "~m~" + payload;
 }
 
 // randomly generate session id
@@ -327,21 +312,28 @@ std::string TradingView::genSession(const std::string& prefix) {
     return s;
 }
 
-void TradingView::printBars(const json& payload) {
-    if (!payload.is_object() || !payload.contains("sds_1"))
-        return;
-    const auto& series = payload["sds_1"];
-    if (!series.contains("s") || !series["s"].is_array())
-        return;
+// Wilder/RMA RSI, matching TradingView's ta.rsi. NaN until we have more than `period` closes.
+double TradingView::computeRSI(const std::vector<double>& closes, int period) {
+    if ((int)closes.size() <= period)
+        return std::nan("");
 
-    for (const auto& bar : series["s"]) {
-        if (!bar.contains("v") || !bar["v"].is_array() || bar["v"].size() < 6)
-            continue;
-        const auto& v = bar["v"]; // [time, open, high, low, close, volume]
-        std::cout << fmtTime((long)v[0].get<double>()) << " UTC  O=" << v[1] << " H=" << v[2]
-                  << " L=" << v[3] << " C=" << v[4] << " V=" << v[5] << "\n";
+    double gain = 0.0, loss = 0.0;
+    for (int i = 1; i <= period; ++i) {
+        double d = closes[i] - closes[i - 1];
+        (d >= 0 ? gain : loss) += std::fabs(d);
     }
+    gain /= period;
+    loss /= period;
+    for (size_t i = period + 1; i < closes.size(); ++i) {
+        double d = closes[i] - closes[i - 1];
+        gain = (gain * (period - 1) + (d > 0 ? d : 0.0)) / period;
+        loss = (loss * (period - 1) + (d < 0 ? -d : 0.0)) / period;
+    }
+    if (loss == 0.0)
+        return 100.0;
+    return 100.0 - 100.0 / (1.0 + gain / loss);
 }
+
 
 std::string TradingView::fmtTime(long epoch) {
     std::time_t t = (std::time_t)epoch;
@@ -349,6 +341,72 @@ std::string TradingView::fmtTime(long epoch) {
     std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M", std::gmtime(&t));
     return buf;
 }
+
+void TradingView::printSeries(const json& seriesMap,
+                              const std::unordered_map<std::string, std::string>& labels,
+                              std::unordered_map<std::string, std::map<long, double>>& closes) {
+    if (!seriesMap.is_object())
+        return;
+
+    // iterate every series id present so multi-symbol updates all print
+    for (const auto& [seriesId, series] : seriesMap.items()) {
+        if (!series.contains("s") || !series["s"].is_array())
+            continue;
+
+        auto it = labels.find(seriesId);
+        const std::string label = (it != labels.end()) ? it->second : seriesId;
+
+        auto& closeByTs = closes[seriesId]; // ordered map dedupes/sorts across full + delta frames
+        double lastVol = std::nan("");
+        for (const auto& bar : series["s"]) {
+            if (!bar.contains("v") || !bar["v"].is_array() || bar["v"].size() < 6)
+                continue;
+            const auto& v = bar["v"]; // [time, open, high, low, close, volume]
+            closeByTs[(long)v[0].get<double>()] = v[4].get<double>();
+            lastVol = v[5].get<double>();
+            std::cout << label << "  " << fmtTime((long)v[0].get<double>()) << " UTC  O=" << v[1]
+                      << " H=" << v[2] << " L=" << v[3] << " C=" << v[4] << " V=" << v[5] << "\n";
+        }
+
+        std::vector<double> ordered;
+        ordered.reserve(closeByTs.size());
+        for (const auto& [ts, c] : closeByTs)
+            ordered.push_back(c);
+
+        double rsi = computeRSI(ordered);
+        if (!std::isnan(rsi))
+            std::cout << label << "  RSI(14)=" << rsi << "\n";
+        if (!std::isnan(lastVol))
+            std::cout << label << "  VOL=" << lastVol << "\n";
+    }
+}
+
+// qsd payload: [ session, { "n":<symbol>, "s":"ok", "v":{ fields } } ]. Updates may
+// be partial, so every field is printed only when present.
+void TradingView::printQuote(const json& payload) {
+    if (!payload.is_array() || payload.size() < 2)
+        return;
+    const auto& data = payload[1];
+    if (!data.is_object() || !data.contains("n") || !data.contains("v"))
+        return;
+
+    const auto& v = data["v"];
+    std::cout << data["n"].get<std::string>();
+    if (v.contains("lp"))
+        std::cout << "  last=" << v["lp"];
+    if (v.contains("ch"))
+        std::cout << " chg=" << v["ch"];
+    if (v.contains("chp"))
+        std::cout << " chg%=" << v["chp"];
+    if (v.contains("volume"))
+        std::cout << " vol=" << v["volume"];
+    if (v.contains("bid"))
+        std::cout << " bid=" << v["bid"];
+    if (v.contains("ask"))
+        std::cout << " ask=" << v["ask"];
+    std::cout << "\n";
+}
+
 
 // IPC functionality for scheduler compatibility
 // Idea:  WS runs on its own thread; Scheduler polls a thread-safe quote cache.
