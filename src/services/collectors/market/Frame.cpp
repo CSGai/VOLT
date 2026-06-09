@@ -14,8 +14,12 @@ std::vector<std::string> TradingView::Frame::parse(const std::string& data) {
     std::vector<std::string> frames;
     size_t pos = 0;
     while (pos + 3 <= data.size() && data.compare(pos, 3, "~m~") == 0) {
-        pos += 3;                           // skip leading ~m~
-        size_t end = data.find("~m~", pos); // find length delimiter
+        // skip leading ~m~
+        pos += 3;
+        
+        // find length delimiter
+        size_t end = data.find("~m~", pos);
+        
         if (end == std::string::npos)
             break;
         int len = 0;
@@ -24,7 +28,8 @@ std::vector<std::string> TradingView::Frame::parse(const std::string& data) {
         } catch (...) {
             break;
         }
-        pos = end + 3; // skip to payload start
+        // skip to payload start
+        pos = end + 3;
         if (pos + len > data.size())
             break;
         frames.push_back(data.substr(pos, len));

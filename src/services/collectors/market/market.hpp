@@ -18,7 +18,7 @@ namespace market {
 // m -> minutes
 enum intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
 
-inline const std::unordered_map<market::intervals, std::string> INTERVAL_MAP = {
+inline const std::unordered_map<market::intervals, std::string> YAHOO_INTERVAL_MAP = {
     {market::_1m, "1m"},
     {market::_2m, "2m"},
     {market::_5m, "5m"},
@@ -31,6 +31,16 @@ inline const std::unordered_map<market::intervals, std::string> INTERVAL_MAP = {
     {market::_1wk, "1wk"},
     {market::_1mo, "1mo"},
     {market::_3mo, "3mo"}};
+
+inline const std::unordered_map<market::intervals, std::string> TV_INTERVAL_MAP = {
+    {market::_1m, "1"},
+    {market::_5m, "5"},
+    {market::_15m, "15"},
+    {market::_30m, "30"},
+    {market::_60m, "60"}, // 1h
+    {market::_1d, "1D"},
+    {market::_1wk, "1W"},
+    {market::_1mo, "1M"}};
 
 /// query yahoo api interface
 class Yahoo {
@@ -69,8 +79,10 @@ public:
     TradingView();
     TradingView(std::string username, std::string password);
 
-    /// open a WSS connection and stream the requested feed for every symbol
-    void subscribe(const std::vector<std::string>& symbols, Feed type = Feed::Series);
+    /// open a WSS connection and stream the requested feed for every symbol;
+    /// `resolution` sets the bar timeframe for Series feeds (ignored for Quote)
+    void subscribe(const std::vector<std::string>& symbols, Feed type = Feed::Series,
+                   intervals resolution = _1m);
 
 private:
     boolean init = false;

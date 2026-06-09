@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     cout << "=== Trading Bot collector tests ===\n\n";
     market::TradingView tv;
-    tv.subscribe({"NYSE:VRT", "NASDAQ:AVGO"}, market::TradingView::Feed::Series);
+    tv.subscribe({"NYSE:VRT", "NASDAQ:AVGO"}, market::TradingView::Feed::Series, market::_1m);
     cin.get();
     return 0;
 }

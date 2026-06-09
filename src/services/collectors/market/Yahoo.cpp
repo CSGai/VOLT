@@ -37,7 +37,7 @@ cpr::Response Yahoo::get_hist(const std::string& ticker,
                               const market::intervals& interval) {
     cpr::Parameters params = cpr::Parameters{{"period1", std::to_string(period1)},
                                              {"period2", std::to_string(period2)},
-                                             {"interval", market::INTERVAL_MAP.at(interval)}};
+                                             {"interval", market::YAHOO_INTERVAL_MAP.at(interval)}};
     return Get(host + QYAHOO_HIST + ticker, params);
 }
 
