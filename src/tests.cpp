@@ -4,31 +4,35 @@
 #include "services/collectors/news/news.hpp"
 
 #include <cpr/cpr.h>
-#include <nlohmann/json.hpp>
 
 #include <ctime>
 #include <iostream>
+#include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 
 static void pass(const std::string& label) {
-    std::cout << "[PASS] " << label << "\n";
+    std::cout << "[PASS] " << label;
 }
 
 static void fail(const std::string& label, int status) {
     std::cout << "[FAIL] " << label << " (status " << status << ")\n";
 }
 
-static void check(const std::string& label, const cpr::Response& res) {
-    if (res.status_code == 200)
+static void check(const std::string& label, const std::optional<cpr::Response>& res) {
+    if (res && res->status_code == 200) {
         pass(label);
-    else
-        fail(label, res.status_code);
+    } else
+        fail(label, res->status_code);
 }
 
 // for endpoints that embed errors in the body (BEA) or can return empty results (BLS without key)
-static void check_array(const std::string& label, const cpr::Response& res) {
-    if (res.status_code != 200) { fail(label, res.status_code); return; }
-    auto j = nlohmann::json::parse(res.text, nullptr, false);
+static void check_array(const std::string& label, const std::optional<cpr::Response>& res) {
+    if (res && res->status_code != 200) {
+        fail(label, res->status_code);
+        return;
+    }
+    auto j = nlohmann::json::parse(res->text, nullptr, false);
     if (j.is_discarded() || !j.is_array() || j.empty())
         std::cout << "[FAIL] " << label << " (empty or malformed body)\n";
     else
@@ -36,9 +40,9 @@ static void check_array(const std::string& label, const cpr::Response& res) {
 }
 
 static const news::fed::ApiKeys FED_KEYS{
-    .bls = "YOUR_BLS_KEY",
-    .bea = "YOUR_BEA_KEY",
-    .fred = "YOUR_FRED_KEY",
+    .bls = "OOPS",
+    .bea = "OOPS",
+    .fred = "OOPS",
 };
 
 void run_tests() {
@@ -46,11 +50,12 @@ void run_tests() {
 
     // news::fed
     std::cout << "\n-- news::fed --\n";
-    check("fomc_calendar", news::fed::get_fomc_calendar(FED_KEYS.fred));
+    for (const auto& s : news::fed::get_event_calendar(FED_KEYS.fred))
+        std::cout << "event_calendar" << s.label << ", " << s.date << ", " << s.days_until << '\n';
+    
     check_array("get_indicator/CPI", news::fed::get_indicator(news::fed::Indicator::CPI, FED_KEYS));
     check_array("get_indicator/GDP", news::fed::get_indicator(news::fed::Indicator::GDP, FED_KEYS));
     check("get_indicator/EFFR", news::fed::get_indicator(news::fed::Indicator::FedFundsRate, FED_KEYS));
-    check("get_indicators", news::fed::get_indicators(FED_KEYS));
 
     // news::yahoo
     std::cout << "\n-- news::yahoo --\n";

@@ -2,7 +2,8 @@
 #include <iomanip>
 #include <sstream>
 
-// gets windows/unix version of gmt time
+namespace utils::datetime {
+
 time_t to_utc(std::tm& t) {
 #if defined(_WIN32)
     return _mkgmtime(&t);
@@ -10,8 +11,6 @@ time_t to_utc(std::tm& t) {
     return timegm(&t);
 #endif
 }
-
-namespace utils::datetime {
 // parses RFC822/RFC3339
 time_t parse_rfc(const std::string& date_str) {
     std::tm t = {};

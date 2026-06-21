@@ -2,15 +2,18 @@
 #include "utils/utils.hpp"
 
 #include <cpr/cpr.h>
-
+#include <algorithm>
+#include <cstdio>
 #include <ctime>
-#include <iostream>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <regex>
 #include <string>
 #include <vector>
 
 using json = nlohmann::json;
 
+static const std::string FOMC_CAL = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm";
 static const std::string FRED_RELEASE_BASE = "https://api.stlouisfed.org/fred/release/dates";
 static const std::string BLS_BASE = "https://api.bls.gov/publicAPI/v2/timeseries/data/";
 static const std::string BEA_BASE = "https://apps.bea.gov/api/data/";
@@ -56,58 +59,73 @@ static const std::vector<std::pair<Indicator, std::string>> INDICATOR_MAP = {
     {Indicator::FedFundsRate, "FedFundsRate"},
 };
 
+static const std::vector<std::pair<int, std::string>> FRED_EVENTS = {
+    {46, "CPI"},
+    {10, "NFP / Employment Situation"},
+    {51, "PCE / Personal Income & Outlays"},
+    {22, "GDP"},
+    {31, "PPI"},
+};
+
 static int current_year();
+static std::optional<Event> scrape_fomc();
 static cpr::Response get_bls(Indicator ind, const std::string& key, int count);
 static cpr::Response get_bea(Indicator ind, const std::string& key, int count);
 static cpr::Response get_effr();
 
 // public interface
-cpr::Response get_fomc_calendar(const std::string& fred_key) {
-    cpr::Response res = cpr::Get(cpr::Url{FRED_RELEASE_BASE},
-                                 FED_HEADERS,
-                                 cpr::Parameters{
-                                     {"release_id", "101"},
-                                     {"api_key", fred_key},
-                                     {"sort_order", "asc"},
-                                     {"include_release_dates_with_no_data", "true"},
-                                     {"file_type", "json"},
-                                 });
-    if (res.status_code != 200)
-        return res;
-
-    auto body = json::parse(res.text, nullptr, false);
-    if (body.is_discarded() || !body.contains("release_dates"))
-        return res;
-
-    // UTC today same as std::chrono::system_clock::now();
+std::vector<Event> get_event_calendar(const std::string& fred_key) {
     std::time_t today = (std::time(nullptr) / 86400) * 86400;
 
-    json upcoming = json::array();
-    for (const auto& entry : body["release_dates"]) {
-        if (!entry.contains("date"))
+    std::vector<Event> events;
+
+    for (const auto& [release_id, label] : FRED_EVENTS) {
+        cpr::Response res = cpr::Get(cpr::Url{FRED_RELEASE_BASE},
+                                     FED_HEADERS,
+                                     cpr::Parameters{
+                                         {"release_id", std::to_string(release_id)},
+                                         {"api_key", fred_key},
+                                         {"sort_order", "asc"},
+                                         {"include_release_dates_with_no_data", "true"},
+                                         {"file_type", "json"},
+                                     });
+        if (res.status_code != 200)
             continue;
 
-        const std::string& date = entry["date"].get<std::string>();
-        std::tm mt{};
-
-        std::cout << "entry: " << entry;
-
-        sscanf_s(date.c_str(), "%d-%d-%d", &mt.tm_year, &mt.tm_mon, &mt.tm_mday);
-        mt.tm_year -= 1900;
-        mt.tm_mon -= 1;
-
-        std::time_t meeting_t = utils::datetime::to_utc(mt);
-        int days_until = (int)((meeting_t - today) / 86400);
-        if (days_until < 0)
+        auto body = json::parse(res.text, nullptr, false);
+        if (body.is_discarded() || !body.contains("release_dates"))
             continue;
 
-        upcoming.push_back({{"date", date}, {"days_until", days_until}});
+        for (const auto& entry : body["release_dates"]) {
+            if (!entry.contains("date"))
+                continue;
+
+            const std::string& date = entry["date"].get<std::string>();
+            std::tm mt{};
+
+            sscanf_s(date.c_str(), "%d-%d-%d", &mt.tm_year, &mt.tm_mon, &mt.tm_mday);
+            mt.tm_year -= 1900;
+            mt.tm_mon -= 1;
+            int days_until = (int)((utils::datetime::to_utc(mt) - today) / 86400);
+
+            // only next upcoming per event type; skip today since FRED publication dates
+            // can lag the actual event by days, making past events appear as today
+            if (days_until > 0) {
+                events.push_back({label, date, days_until});
+                break;
+            }
+        }
     }
-    res.text = upcoming.dump();
-    return res;
+
+    if (auto fomc = scrape_fomc())
+        events.push_back(*fomc);
+
+    std::sort(events.begin(), events.end(), [](const Event& a, const Event& b) { return a.days_until < b.days_until; });
+    
+    return events;
 }
 
-cpr::Response get_indicator(Indicator indicator, const ApiKeys& keys, int count) {
+std::optional<cpr::Response> get_indicator(Indicator indicator, const ApiKeys& keys, int count) {
     switch (indicator) {
     case Indicator::CPI:
     case Indicator::CoreCPI:
@@ -121,31 +139,60 @@ cpr::Response get_indicator(Indicator indicator, const ApiKeys& keys, int count)
         return get_bea(indicator, keys.bea, count);
     case Indicator::FedFundsRate:
         return get_effr();
+    default:
+        return std::nullopt;
     }
-    cpr::Response err;
-    err.status_code = 400;
-    err.text = "unknown indicator";
-    return err;
-}
-
-cpr::Response get_indicators(const ApiKeys& keys, int count) {
-
-    json result = json::object();
-    for (const auto& [indicator, name] : INDICATOR_MAP) {
-        cpr::Response r = get_indicator(indicator, keys, count);
-        if (r.status_code != 200)
-            continue;
-        auto data = json::parse(r.text, nullptr, false);
-        if (!data.is_discarded())
-            result[name] = data;
-    }
-    cpr::Response out;
-    out.status_code = 200;
-    out.text = result.dump();
-    return out;
 }
 
 // utilities
+static std::optional<Event> scrape_fomc() {
+    static const std::string FOMC_CAL =
+        "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm";
+
+    cpr::Response res = cpr::Get(cpr::Url{FOMC_CAL}, FED_HEADERS);
+    if (res.status_code != 200) return std::nullopt;
+
+    const std::string& html = res.text;
+    std::time_t today = (std::time(nullptr) / 86400) * 86400;
+    int year = current_year();
+
+    static const std::unordered_map<std::string, int> MONTHS = {
+        {"January",1},{"February",2},{"March",3},{"April",4},
+        {"May",5},{"June",6},{"July",7},{"August",8},
+        {"September",9},{"October",10},{"November",11},{"December",12},
+    };
+
+    // Current year's meetings sit at the top of the page in document order.
+    // Scan all rows: fomc-meeting__month div (<strong>MonthName</strong>)
+    // followed by sibling fomc-meeting__date div (DD-DD).
+    // Assign current year to every match; past meetings will have days_until <= 0
+    // and are skipped, so the first positive match is the next upcoming meeting.
+    static const std::regex ENTRY_RE(
+        R"(fomc-meeting__month[^>]*><strong>(January|February|March|April|May|June|July|August|September|October|November|December)</strong></div>\s*<div[^>]*fomc-meeting__date[^>]*>(\d{1,2})-(\d{1,2}))");
+
+    for (auto it = std::sregex_iterator(html.begin(), html.end(), ENTRY_RE);
+         it != std::sregex_iterator{}; ++it) {
+        auto mit = MONTHS.find((*it)[1].str());
+        if (mit == MONTHS.end()) continue;
+        int month     = mit->second;
+        int start_day = std::stoi((*it)[2]);
+        int end_day   = std::stoi((*it)[3]);
+
+        std::tm mt{};
+        mt.tm_year = year - 1900;
+        mt.tm_mon  = month - 1;
+        mt.tm_mday = start_day;
+        int days_until = (int)((utils::datetime::to_utc(mt) - today) / 86400);
+        if (days_until <= 0) continue;
+
+        char buf[14];
+        snprintf(buf, sizeof(buf), "%04d-%02d-%02d/%02d", year, month, start_day, end_day);
+        return Event{"FOMC Rate Decision", buf, days_until};
+    }
+
+    return std::nullopt;
+}
+
 static cpr::Response get_bls(Indicator indicator, const std::string& key, int count) {
     auto it = BLS_SERIES.find(indicator);
     if (it == BLS_SERIES.end()) {
@@ -155,13 +202,10 @@ static cpr::Response get_bls(Indicator indicator, const std::string& key, int co
         return err;
     }
     int year = current_year();
-    json body = {{"seriesid", json::array({it->second})},
-                 {"startyear", std::to_string(year - 1)},
-                 {"endyear", std::to_string(year)}};
-    if (!key.empty()) body["registrationkey"] = key;
-    cpr::Response res = cpr::Post(cpr::Url{BLS_BASE},
-                                  cpr::Header{{"Content-Type", "application/json"}},
-                                  cpr::Body{body.dump()});
+    json body = {{"seriesid", json::array({it->second})}, {"startyear", std::to_string(year - 1)}, {"endyear", std::to_string(year)}};
+    if (!key.empty())
+        body["registrationkey"] = key;
+    cpr::Response res = cpr::Post(cpr::Url{BLS_BASE}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{body.dump()});
     if (res.status_code != 200)
         return res;
 

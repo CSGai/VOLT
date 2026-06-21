@@ -81,13 +81,16 @@ struct ApiKeys {
     std::string fred; // api.stlouisfed.org  (FOMC calendar only)
 };
 
-// upcoming FOMC meetings via FRED release 101; res.text = [{date, days_until}]
-cpr::Response get_fomc_calendar(const std::string& fred_key);
+struct Event {
+    std::string label;
+    std::string date;
+    int days_until;
+};
+
+// next upcoming date per major market-moving release via FRED; res.text = [{event, date, days_until}] sorted ascending
+std::vector<Event> get_event_calendar(const std::string& fred_key);
 
 // latest `count` observations for one indicator (BLS/BEA/NY Fed routed by indicator)
-cpr::Response get_indicator(Indicator ind, const ApiKeys& keys, int count = 3);
-
-// latest `count` observations for all indicators; res.text = {"CPI": [...], ...}
-cpr::Response get_indicators(const ApiKeys& keys, int count = 3);
+std::optional<cpr::Response> get_indicator(Indicator ind, const ApiKeys& keys, int count = 3);
 
 } // namespace news::fed
