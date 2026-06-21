@@ -6,7 +6,7 @@
 namespace utils::datetime {
 
 /// prase rfc822 and rfc3339 to a unix timestamp
-time_t parse_rfc(const std::string& dateStr);
+time_t parse_rfc(const std::string& date_str);
 
 } // namespace utils::datetime
 

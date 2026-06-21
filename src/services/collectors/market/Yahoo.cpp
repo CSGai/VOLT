@@ -34,11 +34,11 @@ Yahoo::Yahoo() {
 cpr::Response Yahoo::get_hist(const std::string& ticker,
                               const time_t& period1,
                               const time_t& period2,
-                              const market::intervals& interval) {
+                              const market::Intervals& interval) {
     cpr::Parameters params = cpr::Parameters{{"period1", std::to_string(period1)},
                                              {"period2", std::to_string(period2)},
                                              {"interval", market::YAHOO_INTERVAL_MAP.at(interval)}};
-    return Get(host + QYAHOO_HIST + ticker, params);
+    return get(host + QYAHOO_HIST + ticker, params);
 }
 
 // get ticker's real time data
@@ -50,10 +50,10 @@ cpr::Response Yahoo::get_quote(const std::vector<std::string>& symbols) {
 
     cpr::Parameters params =
         cpr::Parameters{{"symbols", utils::misc::str_join(symbols, ',')}, {"crumb", this->crumb}};
-    cpr::Response res = Get(host + QYAHOO_QUOTE, params);
+    cpr::Response res = get(host + QYAHOO_QUOTE, params);
     if (res.status_code != 200) {
         this->crumb = get_crumb();
-        res = Get(host + QYAHOO_QUOTE, params);
+        res = get(host + QYAHOO_QUOTE, params);
     }
     return res;
 }
@@ -61,11 +61,11 @@ cpr::Response Yahoo::get_quote(const std::vector<std::string>& symbols) {
 cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, int news_count) {
     cpr::Parameters params = cpr::Parameters{{"q", utils::misc::str_join(symbols, ',')},
                                              {"newsCount", std::to_string(news_count)}};
-    return Get(host + QYAHOO_SEARCH, params);
+    return get(host + QYAHOO_SEARCH, params);
 }
 
 // session get
-cpr::Response Yahoo::Get(const std::string& url, cpr::Parameters params, cpr::Header headers) {
+cpr::Response Yahoo::get(const std::string& url, cpr::Parameters params, cpr::Header headers) {
     // session set variables
     if (!headers.empty())
         session.SetHeader(headers);

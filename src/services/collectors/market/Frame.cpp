@@ -49,7 +49,7 @@ std::string TradingView::Frame::wrap(const std::string& payload) {
     return "~m~" + std::to_string(payload.size()) + "~m~" + payload;
 }
 
-bool TradingView::Frame::isHeartbeat(const std::string& payload) {
+bool TradingView::Frame::is_heartbeat(const std::string& payload) {
     return payload.rfind("~h~", 0) == 0;
 }
 

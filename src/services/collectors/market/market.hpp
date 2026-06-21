@@ -16,9 +16,9 @@ namespace market {
 
 // d -> days
 // m -> minutes
-enum intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
+enum Intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
 
-inline const std::unordered_map<market::intervals, std::string> YAHOO_INTERVAL_MAP = {
+inline const std::unordered_map<market::Intervals, std::string> YAHOO_INTERVAL_MAP = {
     {market::_1m, "1m"},
     {market::_2m, "2m"},
     {market::_5m, "5m"},
@@ -32,7 +32,7 @@ inline const std::unordered_map<market::intervals, std::string> YAHOO_INTERVAL_M
     {market::_1mo, "1mo"},
     {market::_3mo, "3mo"}};
 
-inline const std::unordered_map<market::intervals, std::string> TV_INTERVAL_MAP = {
+inline const std::unordered_map<market::Intervals, std::string> TV_INTERVAL_MAP = {
     {market::_1m, "1"},
     {market::_5m, "5"},
     {market::_15m, "15"},
@@ -50,7 +50,7 @@ public:
     cpr::Response get_hist(const std::string& ticker,
                            const time_t& period1,
                            const time_t& period2,
-                           const market::intervals& interval);
+                           const market::Intervals& interval);
     /// get current symbols quotes
     cpr::Response get_quote(const std::vector<std::string>& symbols);
     /// get news for specific tickers
@@ -63,7 +63,7 @@ private:
     /// gets crumbs for authentication
     std::string get_crumb();
     /// general session based get request for authenticated market calls
-    cpr::Response Get(const std::string& url,
+    cpr::Response get(const std::string& url,
                       cpr::Parameters params = cpr::Parameters{},
                       cpr::Header headers = cpr::Header{});
 
@@ -82,10 +82,10 @@ public:
     /// open a WSS connection and stream the requested feed for every symbol;
     /// `resolution` sets the bar timeframe for Series feeds (ignored for Quote)
     void subscribe(const std::vector<std::string>& symbols, Feed type = Feed::Series,
-                   intervals resolution = _1m);
+                   Intervals resolution = _1m);
 
 private:
-    boolean init = false;
+    bool init = false;
     cpr::Session session;
     void init_session();
     void login(std::string username, std::string password);
@@ -100,20 +100,20 @@ private:
         /// build and wrap a {"m":method,"p":params} command frame
         static std::string command(const std::string& method, const json& params);
         /// true if payload is a server heartbeat (~h~<n>)
-        static bool isHeartbeat(const std::string& payload);
+        static bool is_heartbeat(const std::string& payload);
     };
 
-    static std::string genSession(const std::string& prefix);
-    static std::string fmtTime(long epoch);
+    static std::string gen_session(const std::string& prefix);
+    static std::string fmt_time(long epoch);
     /// print OHLCV bars from a timescale_update/du series map (labels: sds_N -> symbol),
-    /// merge closes into `closes` (seriesId -> epoch -> close) and print RSI + volume per series
-    static void printSeries(const json& seriesMap,
-                            const std::unordered_map<std::string, std::string>& labels,
-                            std::unordered_map<std::string, std::map<long, double>>& closes);
+    /// merge closes into `closes` (series_id -> epoch -> close) and print RSI + volume per series
+    static void print_series(const json& series_map,
+                             const std::unordered_map<std::string, std::string>& labels,
+                             std::unordered_map<std::string, std::map<long, double>>& closes);
     /// Wilder/RMA RSI over an ordered close series; NaN until size > period
-    static double computeRSI(const std::vector<double>& closes, int period = 14);
+    static double compute_rsi(const std::vector<double>& closes, int period = 14);
     /// print a quote update from a qsd frame
-    static void printQuote(const json& payload);
+    static void print_quote(const json& payload);
 };
 
 }; // namespace market
