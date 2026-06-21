@@ -16,10 +16,10 @@ std::vector<std::string> TradingView::Frame::parse(const std::string& data) {
     while (pos + 3 <= data.size() && data.compare(pos, 3, "~m~") == 0) {
         // skip leading ~m~
         pos += 3;
-        
+
         // find length delimiter
         size_t end = data.find("~m~", pos);
-        
+
         if (end == std::string::npos)
             break;
         int len = 0;

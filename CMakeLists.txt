@@ -87,6 +87,7 @@ FetchContent_MakeAvailable(
 # ========================
 add_executable(TradingBot
     src/TradingBot.cpp
+    src/tests.cpp
 
     src/services/collectors/market/Yahoo.cpp
     src/services/collectors/market/TradingView.cpp

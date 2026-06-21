@@ -5,8 +5,11 @@
 
 namespace utils::datetime {
 
-/// prase rfc822 and rfc3339 to a unix timestamp
+/// parse rfc822 and rfc3339 to a unix timestamp
 time_t parse_rfc(const std::string& date_str);
+
+/// convert a std::tm (interpreted as UTC) to time_t
+time_t to_utc(std::tm& t);
 
 } // namespace utils::datetime
 

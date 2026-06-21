@@ -1,14 +1,14 @@
 #pragma once
 
-#include <cpr/cpr.h>
 #include "nlohmann/json_fwd.hpp"
+
+#include <cpr/cpr.h>
 
 #include <ctime>
 #include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 
 using json = nlohmann::json;
 
@@ -21,16 +21,12 @@ enum Intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3
 extern const std::unordered_map<Intervals, std::string> YAHOO_INTERVAL_MAP;
 extern const std::unordered_map<Intervals, std::string> TV_INTERVAL_MAP;
 
-
 /// query yahoo api interface
 class Yahoo {
 public:
     Yahoo();
     /// get history endpoint for each ticker at period range
-    cpr::Response get_hist(const std::string& ticker,
-                           const time_t& period1,
-                           const time_t& period2,
-                           const market::Intervals& interval);
+    cpr::Response get_hist(const std::string& ticker, const time_t& period1, const time_t& period2, const market::Intervals& interval);
     /// get current symbols quotes
     cpr::Response get_quote(const std::vector<std::string>& symbols);
     /// get news for specific tickers
@@ -43,9 +39,7 @@ private:
     /// gets crumbs for authentication
     std::string get_crumb();
     /// general session based get request for authenticated market calls
-    cpr::Response get(const std::string& url,
-                      cpr::Parameters params = cpr::Parameters{},
-                      cpr::Header headers = cpr::Header{});
+    cpr::Response get(const std::string& url, cpr::Parameters params = cpr::Parameters{}, cpr::Header headers = cpr::Header{});
 
     // util
     static std::string test_urls();
@@ -61,8 +55,7 @@ public:
 
     /// open a WSS connection and stream the requested feed for every symbol;
     /// `resolution` sets the bar timeframe for Series feeds (ignored for Quote)
-    void subscribe(const std::vector<std::string>& symbols, Feed type = Feed::Series,
-                   Intervals resolution = _1m);
+    void subscribe(const std::vector<std::string>& symbols, Feed type = Feed::Series, Intervals resolution = _1m);
 
 private:
     bool init = false;
@@ -98,14 +91,14 @@ private:
 
 namespace cnn {
 
-enum class FngTimescale { Now, Snapshot, HistoricalSeries };
+    enum class FngTimescale { Now, Snapshot, HistoricalSeries };
 
-// previous close
-cpr::Response get_snapshot(FngTimescale timescale = FngTimescale::Now);
+    // previous close
+    cpr::Response get_snapshot(FngTimescale timescale = FngTimescale::Now);
 
-// fear_and_greed_historical.data: [{x: epoch_ms, y: score, rating}]
-// from_epoch (unix seconds) trims how far back the series goes; 0 = full history
-cpr::Response get_historical(time_t from_epoch = 0);
+    // fear_and_greed_historical.data: [{x: epoch_ms, y: score, rating}]
+    // from_epoch (unix seconds) trims how far back the series goes; 0 = full history
+    cpr::Response get_historical(time_t from_epoch = 0);
 
 } // namespace cnn
 

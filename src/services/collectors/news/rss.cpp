@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 constexpr int default_refresh_rate = 15;
 
 namespace news {

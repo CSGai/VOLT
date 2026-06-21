@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace news {
 struct Article {
     std::string title;
@@ -27,9 +26,7 @@ public:
     void print_refresh_rates();
 
     /// read-only access to current per-feed refresh-rate map
-    const std::unordered_map<int, std::vector<std::string>>& get_refresh_rates() const {
-        return refresh_rates;
-    }
+    const std::unordered_map<int, std::vector<std::string>>& get_refresh_rates() const { return refresh_rates; }
 
     /// sync wrapper around get_rss, exposed only so tests can verify the
     /// conditional-GET / 304 path; production code goes through scheduled_polling
@@ -76,17 +73,21 @@ cpr::Response rss_market_news();
 
 namespace news::fed {
 
-enum class Indicator {
-    CPI, CoreCPI, PCE, CorePCE, GDP, Unemployment, FedFundsRate, PPI, Payrolls
+enum class Indicator { CPI, CoreCPI, PCE, CorePCE, GDP, Unemployment, FedFundsRate, PPI, Payrolls };
+
+struct ApiKeys {
+    std::string bls;  // api.bls.gov
+    std::string bea;  // apps.bea.gov
+    std::string fred; // api.stlouisfed.org  (FOMC calendar only)
 };
 
-// upcoming FOMC meetings; res.text = [{date, days_until, has_press_conf}]
-cpr::Response get_fomc_calendar();
+// upcoming FOMC meetings via FRED release 101; res.text = [{date, days_until}]
+cpr::Response get_fomc_calendar(const std::string& fred_key);
 
-// latest `count` FRED observations for one indicator
-cpr::Response get_indicator(Indicator ind, const std::string& api_key, int count = 3);
+// latest `count` observations for one indicator (BLS/BEA/NY Fed routed by indicator)
+cpr::Response get_indicator(Indicator ind, const ApiKeys& keys, int count = 3);
 
-// latest `count` observations for all indicators; res.text = {"CPIAUCSL": [...], ...}
-cpr::Response get_indicators(const std::string& api_key, int count = 3);
+// latest `count` observations for all indicators; res.text = {"CPI": [...], ...}
+cpr::Response get_indicators(const ApiKeys& keys, int count = 3);
 
 } // namespace news::fed

@@ -17,7 +17,6 @@
 
 using json = nlohmann::json;
 
-
 static const std::string TV_ORIGIN = "https://www.tradingview.com";
 static const std::string TV_HOME = "https://www.tradingview.com/";
 static const std::string TV_LOGIN = "https://www.tradingview.com/accounts/signin/";
@@ -27,13 +26,13 @@ static const std::string TV_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Appl
 namespace market {
 
 const std::unordered_map<Intervals, std::string> TV_INTERVAL_MAP = {
-    {_1m,  "1"},
-    {_5m,  "5"},
+    {_1m, "1"},
+    {_5m, "5"},
     {_15m, "15"},
     {_30m, "30"},
     {_60m, "60"},
-    {_1d,  "1D"},
-    {_5d,  "5D"},
+    {_1d, "1D"},
+    {_5d, "5D"},
     {_1wk, "1W"},
     {_1mo, "1M"},
     {_3mo, "3M"},
@@ -80,8 +79,7 @@ void TradingView::login(std::string username, std::string password) {
 
 // anon mode for now; authenticated-session option (sessionid cookie) still TODO.
 // One connection streams every symbol; Feed picks chart-series vs. quote frames.
-void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
-                            Intervals resolution) {
+void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type, Intervals resolution) {
     ix::initNetSystem();
 
     ix::WebSocket ws;
@@ -94,7 +92,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
     const std::string timeframe = (rit != TV_INTERVAL_MAP.end()) ? rit->second : "1";
     const int bar_count = 300;
 
-    std::unordered_map<std::string, std::string> labels; // sds_N -> symbol, for bar output
+    std::unordered_map<std::string, std::string> labels;            // sds_N -> symbol, for bar output
     std::unordered_map<std::string, std::map<long, double>> closes; // sds_N -> epoch -> close
 
     // bootstrap frames for the chosen feed, sent once the server session is ready
@@ -116,8 +114,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
             const std::string qs = gen_session("qs_");
             std::cout << "[handshake] session=" << qs << "\n";
             ws.send(Frame::command("quote_create_session", {qs}));
-            ws.send(Frame::command("quote_set_fields",
-                                   {qs, "lp", "ch", "chp", "volume", "bid", "ask"}));
+            ws.send(Frame::command("quote_set_fields", {qs, "lp", "ch", "chp", "volume", "bid", "ask"}));
             // quote_add_symbols: session id followed by every symbol, one frame
             json add = json::array({qs});
             for (const std::string& sym : symbols)
@@ -136,8 +133,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
             json spec = {{"symbol", symbols[i]}, {"adjustment", "splits"}, {"session", "extended"}};
             ws.send(Frame::command("chart_create_session", {cs, ""}));
             ws.send(Frame::command("resolve_symbol", {cs, sym_id, "=" + spec.dump()}));
-            ws.send(Frame::command("create_series", {cs, series_id, "s" + std::to_string(i), sym_id,
-                                                     timeframe, bar_count, ""}));
+            ws.send(Frame::command("create_series", {cs, series_id, "s" + std::to_string(i), sym_id, timeframe, bar_count, ""}));
             labels[series_id] = symbols[i];
         }
     };
@@ -155,27 +151,26 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
                     ws.send(Frame::wrap(payload));
                     continue;
                 }
-                
+
                 json j = json::parse(payload, nullptr, false);
                 if (j.is_discarded())
                     continue;
 
                 // first server frame
-                if (j.contains("session_id")) { 
+                if (j.contains("session_id")) {
                     handshake();
                     continue;
                 }
                 if (!j.contains("m"))
                     continue;
                 const std::string m = j["m"].get<std::string>();
-                
+
                 // message type and printing
                 if ((m == "timescale_update" || m == "du") && j["p"].size() > 1) {
                     print_series(j["p"][1], labels, closes); // p[1] = { "sds_<i>": { "s": [bars] } }
                 } else if (m == "qsd") {
                     print_quote(j["p"]);
-                } else if (m == "symbol_error" || m == "series_error" || m == "critical_error" ||
-                           m == "protocol_error") {
+                } else if (m == "symbol_error" || m == "series_error" || m == "critical_error" || m == "protocol_error") {
                     std::cout << "[" << m << "] " << j["p"].dump() << "\n";
                 }
             }
@@ -193,8 +188,8 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type,
     });
 
     ws.start();
-    std::cout << "Streaming " << (type == Feed::Quote ? "quotes" : "series") << " for "
-              << symbols.size() << " symbol(s) - Enter to quit." << "\n";
+    std::cout << "Streaming " << (type == Feed::Quote ? "quotes" : "series") << " for " << symbols.size()
+              << " symbol(s) - Enter to quit." << "\n";
     std::cin.get();
 
     ws.stop();
@@ -235,7 +230,6 @@ double TradingView::compute_rsi(const std::vector<double>& closes, int period) {
     return 100.0 - 100.0 / (1.0 + gain / loss);
 }
 
-
 std::string TradingView::fmt_time(long epoch) {
     std::time_t t = (std::time_t)epoch;
     char buf[32];
@@ -267,8 +261,8 @@ void TradingView::print_series(const json& series_map,
             const auto& v = bar["v"]; // [time, open, high, low, close, volume]
             close_by_ts[(long)v[0].get<double>()] = v[4].get<double>();
             last_vol = v[5].get<double>();
-            std::cout << label << "  " << fmt_time((long)v[0].get<double>()) << " UTC  O=" << v[1]
-                      << " H=" << v[2] << " L=" << v[3] << " C=" << v[4] << " V=" << v[5] << "\n";
+            std::cout << label << "  " << fmt_time((long)v[0].get<double>()) << " UTC  O=" << v[1] << " H=" << v[2] << " L=" << v[3]
+                      << " C=" << v[4] << " V=" << v[5] << "\n";
         }
 
         std::vector<double> ordered;
@@ -309,7 +303,6 @@ void TradingView::print_quote(const json& payload) {
         std::cout << " ask=" << v["ask"];
     std::cout << "\n";
 }
-
 
 // IPC functionality for scheduler compatibility
 // Idea:  WS runs on its own thread; Scheduler polls a thread-safe quote cache.

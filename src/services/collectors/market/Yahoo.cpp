@@ -21,15 +21,15 @@ static const std::string QYAHOO_SEARCH = "/v1/finance/search";
 namespace market {
 
 const std::unordered_map<Intervals, std::string> YAHOO_INTERVAL_MAP = {
-    {_1m,  "1m"},
-    {_2m,  "2m"},
-    {_5m,  "5m"},
+    {_1m, "1m"},
+    {_2m, "2m"},
+    {_5m, "5m"},
     {_15m, "15m"},
     {_30m, "30m"},
     {_60m, "60m"},
     {_90m, "90m"},
-    {_1d,  "1d"},
-    {_5d,  "5d"},
+    {_1d, "1d"},
+    {_5d, "5d"},
     {_1wk, "1wk"},
     {_1mo, "1mo"},
     {_3mo, "3mo"},
@@ -46,10 +46,8 @@ Yahoo::Yahoo() {
 }
 
 // get ticker's historical data
-cpr::Response Yahoo::get_hist(const std::string& ticker,
-                              const time_t& period1,
-                              const time_t& period2,
-                              const market::Intervals& interval) {
+cpr::Response
+Yahoo::get_hist(const std::string& ticker, const time_t& period1, const time_t& period2, const market::Intervals& interval) {
     cpr::Parameters params = cpr::Parameters{{"period1", std::to_string(period1)},
                                              {"period2", std::to_string(period2)},
                                              {"interval", market::YAHOO_INTERVAL_MAP.at(interval)}};
@@ -63,8 +61,7 @@ cpr::Response Yahoo::get_quote(const std::vector<std::string>& symbols) {
         get_crumb();
     }
 
-    cpr::Parameters params =
-        cpr::Parameters{{"symbols", utils::misc::str_join(symbols, ',')}, {"crumb", this->crumb}};
+    cpr::Parameters params = cpr::Parameters{{"symbols", utils::misc::str_join(symbols, ',')}, {"crumb", this->crumb}};
     cpr::Response res = get(host + QYAHOO_QUOTE, params);
     if (res.status_code != 200) {
         this->crumb = get_crumb();
@@ -74,8 +71,7 @@ cpr::Response Yahoo::get_quote(const std::vector<std::string>& symbols) {
 }
 
 cpr::Response Yahoo::get_ticker_news(const std::vector<std::string>& symbols, int news_count) {
-    cpr::Parameters params = cpr::Parameters{{"q", utils::misc::str_join(symbols, ',')},
-                                             {"newsCount", std::to_string(news_count)}};
+    cpr::Parameters params = cpr::Parameters{{"q", utils::misc::str_join(symbols, ',')}, {"newsCount", std::to_string(news_count)}};
     return get(host + QYAHOO_SEARCH, params);
 }
 
