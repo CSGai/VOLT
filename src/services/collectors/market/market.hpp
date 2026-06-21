@@ -18,29 +18,9 @@ namespace market {
 // m -> minutes
 enum Intervals { _1m, _2m, _5m, _15m, _30m, _60m, _90m, _1d, _5d, _1wk, _1mo, _3mo };
 
-inline const std::unordered_map<market::Intervals, std::string> YAHOO_INTERVAL_MAP = {
-    {market::_1m, "1m"},
-    {market::_2m, "2m"},
-    {market::_5m, "5m"},
-    {market::_15m, "15m"},
-    {market::_30m, "30m"},
-    {market::_60m, "60m"},
-    {market::_90m, "90m"},
-    {market::_1d, "1d"},
-    {market::_5d, "5d"},
-    {market::_1wk, "1wk"},
-    {market::_1mo, "1mo"},
-    {market::_3mo, "3mo"}};
+extern const std::unordered_map<Intervals, std::string> YAHOO_INTERVAL_MAP;
+extern const std::unordered_map<Intervals, std::string> TV_INTERVAL_MAP;
 
-inline const std::unordered_map<market::Intervals, std::string> TV_INTERVAL_MAP = {
-    {market::_1m, "1"},
-    {market::_5m, "5"},
-    {market::_15m, "15"},
-    {market::_30m, "30"},
-    {market::_60m, "60"}, // 1h
-    {market::_1d, "1D"},
-    {market::_1wk, "1W"},
-    {market::_1mo, "1M"}};
 
 /// query yahoo api interface
 class Yahoo {
@@ -115,5 +95,18 @@ private:
     /// print a quote update from a qsd frame
     static void print_quote(const json& payload);
 };
+
+namespace cnn {
+
+enum class FngTimescale { Now, Snapshot, HistoricalSeries };
+
+// previous close
+cpr::Response get_snapshot(FngTimescale timescale = FngTimescale::Now);
+
+// fear_and_greed_historical.data: [{x: epoch_ms, y: score, rating}]
+// from_epoch (unix seconds) trims how far back the series goes; 0 = full history
+cpr::Response get_historical(time_t from_epoch = 0);
+
+} // namespace cnn
 
 }; // namespace market

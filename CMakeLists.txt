@@ -91,9 +91,11 @@ add_executable(TradingBot
     src/services/collectors/market/Yahoo.cpp
     src/services/collectors/market/TradingView.cpp
     src/services/collectors/market/Frame.cpp
+    src/services/collectors/market/cnn.cpp
 
     src/services/collectors/news/Rss.cpp
     src/services/collectors/news/yahoo.cpp
+    src/services/collectors/news/fed.cpp
 
     src/utils/datetime.cpp
     src/utils/misc.cpp

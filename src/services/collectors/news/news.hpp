@@ -73,3 +73,20 @@ namespace news::yahoo {
 cpr::Response get_ticker_headlines(const std::vector<std::string>& symbols);
 cpr::Response rss_market_news();
 } // namespace news::yahoo
+
+namespace news::fed {
+
+enum class Indicator {
+    CPI, CoreCPI, PCE, CorePCE, GDP, Unemployment, FedFundsRate, PPI, Payrolls
+};
+
+// upcoming FOMC meetings; res.text = [{date, days_until, has_press_conf}]
+cpr::Response get_fomc_calendar();
+
+// latest `count` FRED observations for one indicator
+cpr::Response get_indicator(Indicator ind, const std::string& api_key, int count = 3);
+
+// latest `count` observations for all indicators; res.text = {"CPIAUCSL": [...], ...}
+cpr::Response get_indicators(const std::string& api_key, int count = 3);
+
+} // namespace news::fed

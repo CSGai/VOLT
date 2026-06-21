@@ -26,6 +26,19 @@ static const std::string TV_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Appl
 
 namespace market {
 
+const std::unordered_map<Intervals, std::string> TV_INTERVAL_MAP = {
+    {_1m,  "1"},
+    {_5m,  "5"},
+    {_15m, "15"},
+    {_30m, "30"},
+    {_60m, "60"},
+    {_1d,  "1D"},
+    {_5d,  "5D"},
+    {_1wk, "1W"},
+    {_1mo, "1M"},
+    {_3mo, "3M"},
+};
+
 // anon login - same data, same resolution unless premium account
 TradingView::TradingView() {
     init_session();
