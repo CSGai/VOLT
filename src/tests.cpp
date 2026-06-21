@@ -40,9 +40,9 @@ static void check_array(const std::string& label, const std::optional<cpr::Respo
 }
 
 static const news::fed::ApiKeys FED_KEYS{
-    .bls = "OOPS",
-    .bea = "OOPS",
-    .fred = "OOPS",
+    .bls = "",
+    .bea = "",
+    .fred = "",
 };
 
 void run_tests() {
