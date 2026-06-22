@@ -8,83 +8,126 @@
 #include <ctime>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <optional>
 #include <string>
+#include <vector>
 
-static void pass(const std::string& label) {
-    std::cout << "[PASS] " << label;
+static const cpr::Header RSS_HEADERS = {
+    {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+};
+
+static const std::string FRED_KEY = "";
+
+static std::string fmt_time(time_t t) {
+    char buf[32];
+    std::tm tm_utc{};
+    gmtime_s(&tm_utc, &t);
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M UTC", &tm_utc);
+    return buf;
 }
 
-static void fail(const std::string& label, int status) {
-    std::cout << "[FAIL] " << label << " (status " << status << ")\n";
+static void print_articles(const std::string& label, const std::vector<news::Article>& articles) {
+    std::cout << "\n-- " << label << " (" << articles.size() << " articles) --\n";
+    for (const auto& a : articles) {
+        std::cout << "  [" << fmt_time(a.published_at) << "] " << a.title << "\n"
+                   << "    " << a.publisher << " - " << a.url << "\n";
+    }
 }
 
-static void check(const std::string& label, const std::optional<cpr::Response>& res) {
-    if (res && res->status_code == 200) {
-        pass(label);
-    } else
-        fail(label, res->status_code);
-}
-
-// for endpoints that embed errors in the body (BEA) or can return empty results (BLS without key)
-static void check_array(const std::string& label, const std::optional<cpr::Response>& res) {
-    if (res && res->status_code != 200) {
-        fail(label, res->status_code);
+static void fetch_and_print_rss(const std::string& label, const cpr::Url& url) {
+    cpr::Response res = cpr::Get(url, RSS_HEADERS);
+    if (res.status_code != 200) {
+        std::cout << "\n-- " << label << " --\n  [ERROR] status " << res.status_code << "\n";
         return;
     }
-    auto j = nlohmann::json::parse(res->text, nullptr, false);
-    if (j.is_discarded() || !j.is_array() || j.empty())
-        std::cout << "[FAIL] " << label << " (empty or malformed body)\n";
-    else
-        pass(label);
+    news::Rss rss;
+    print_articles(label, rss.parse_rss(res));
 }
-
-static const news::fed::ApiKeys FED_KEYS{
-    .bls = "",
-    .bea = "",
-    .fred = "",
-};
 
 void run_tests() {
     std::cout << "=== TradingBot tests ===\n";
 
-    // news::fed
-    std::cout << "\n-- news::fed --\n";
-    for (const auto& s : news::fed::get_event_calendar(FED_KEYS.fred))
-        std::cout << "event_calendar" << s.label << ", " << s.date << ", " << s.days_until << '\n';
+    // // market::cnn - fear & greed: last close, 1 week, 1 month
+    // std::cout << "\n-- market::cnn fear & greed --\n";
+    // {
+    //     cpr::Response res = market::cnn::get_snapshot(market::cnn::FngTimescale::Snapshot);
+    //     if (res.status_code != 200) {
+    //         std::cout << "  [ERROR] status " << res.status_code << "\n";
+    //     } else {
+    //         auto body = nlohmann::json::parse(res.text, nullptr, false);
+    //         if (body.is_discarded()) {
+    //             std::cout << "  [ERROR] malformed body\n";
+    //         } else {
+    //             std::cout << "  now:            " << body.value("score", -1.0) << " (" << body.value("rating", "?") << ")\n"
+    //                       << "  previous close: " << body.value("previous_close", -1.0) << "\n"
+    //                       << "  previous 1wk:   " << body.value("previous_1_week", -1.0) << "\n"
+    //                       << "  previous 1mo:   " << body.value("previous_1_month", -1.0) << "\n";
+    //         }
+    //     }
+    // }
+
+    // // market::Yahoo - quotes for VIX & SPY
+    // std::cout << "\n-- market::Yahoo quotes (^VIX, SPY) --\n";
+    // {
+    //     market::Yahoo yahoo;
+    //     cpr::Response res = yahoo.get_quote({"^VIX", "SPY"});
+    //     if (res.status_code != 200) {
+    //         std::cout << "  [ERROR] status " << res.status_code << "\n";
+    //     } else {
+    //         auto body = nlohmann::json::parse(res.text, nullptr, false);
+    //         if (body.is_discarded()) {
+    //             std::cout << "  [ERROR] malformed body\n";
+    //         } else {
+    //             for (const auto& q : body.value("quoteResponse", nlohmann::json{}).value("result", nlohmann::json::array())) {
+    //                 std::cout << "  " << q.value("symbol", "?") << " (" << q.value("shortName", "?") << "): "
+    //                           << q.value("regularMarketPrice", 0.0) << " (" << q.value("regularMarketChangePercent", 0.0) << "%)\n";
+    //             }
+    //         }
+    //     }
+    // }
+
+    // // news::yahoo - RSS headlines for VIX & SPY
+    // {
+    //     cpr::Response res = news::yahoo::get_ticker_headlines({"^VIX", "SPY"});
+    //     if (res.status_code != 200) {
+    //         std::cout << "\n-- news::yahoo ticker headlines (^VIX, SPY) --\n  [ERROR] status " << res.status_code << "\n";
+    //     } else {
+    //         news::Rss rss;
+    //         print_articles("news::yahoo ticker headlines (^VIX, SPY)", rss.parse_rss(res));
+    //     }
+    // }
+
+    // // news::yahoo - general market news RSS
+    // {
+    //     cpr::Response res = news::yahoo::rss_market_news();
+    //     if (res.status_code != 200) {
+    //         std::cout << "\n-- news::yahoo market news --\n  [ERROR] status " << res.status_code << "\n";
+    //     } else {
+    //         news::Rss rss;
+    //         print_articles("news::yahoo market news", rss.parse_rss(res));
+    //     }
+    // }
+
+    // // news::fed - upcoming economic event calendar
+    // std::cout << "\n-- news::fed event calendar --\n";
+    // {
+    //     auto events = news::fed::get_event_calendar(FRED_KEY);
+    //     if (events.empty()) {
+    //         std::cout << "  [ERROR] no events returned\n";
+    //     } else {
+    //         for (const auto& e : events)
+    //             std::cout << "  " << e.date << "  " << e.label << " (in " << e.days_until << " days)\n";
+    //     }
+    // }
+
+    // // Dow Jones - breaking market news RSS
+    // fetch_and_print_rss("Dow Jones breaking news", cpr::Url{"https://feeds.content.dowjones.io/public/rss/mw_bulletins"});
+
+    // // CNBC - global news RSS
+    // fetch_and_print_rss("CNBC global news",
+    //                      cpr::Url{"https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100727362"});
     
-    check_array("get_indicator/CPI", news::fed::get_indicator(news::fed::Indicator::CPI, FED_KEYS));
-    check_array("get_indicator/GDP", news::fed::get_indicator(news::fed::Indicator::GDP, FED_KEYS));
-    check("get_indicator/EFFR", news::fed::get_indicator(news::fed::Indicator::FedFundsRate, FED_KEYS));
-
-    // news::yahoo
-    std::cout << "\n-- news::yahoo --\n";
-    check("rss_market_news", news::yahoo::rss_market_news());
-    check("get_ticker_headlines", news::yahoo::get_ticker_headlines({"AAPL"}));
-
-    // news::Rss
-    std::cout << "\n-- news::Rss --\n";
-    {
-        news::Rss rss;
-        check("Rss::fetch_sync",
-              rss.fetch_sync(cpr::Url{"https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US"}));
-    }
-
-    // market::cnn
-    std::cout << "\n-- market::cnn --\n";
-    check("cnn::get_snapshot", market::cnn::get_snapshot());
-    check("cnn::get_historical", market::cnn::get_historical(std::time(nullptr) - 60 * 60 * 24 * 30));
-
-    // market::Yahoo
-    std::cout << "\n-- market::Yahoo --\n";
-    {
-        market::Yahoo yahoo;
-        std::time_t now = std::time(nullptr);
-        std::time_t week_ago = now - 60 * 60 * 24 * 7;
-        check("Yahoo::get_hist", yahoo.get_hist("AAPL", week_ago, now, market::_1d));
-        check("Yahoo::get_quote", yahoo.get_quote({"AAPL", "MSFT"}));
-        check("Yahoo::get_ticker_news", yahoo.get_ticker_news({"AAPL"}, 3));
-    }
+    market::TradingView tv{};
+    tv.subscribe({"CBOE:VIX"}, market::TradingView::Feed::Series, market::Intervals::_5m);
 
     std::cout << "\n=== done ===\n";
 }

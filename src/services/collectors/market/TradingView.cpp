@@ -120,6 +120,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type, 
             for (const std::string& sym : symbols)
                 add.push_back(sym);
             ws.send(Frame::command("quote_add_symbols", add));
+            std::cout << "Completed Quote Handshake\n";
             return;
         }
 
@@ -135,6 +136,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type, 
             ws.send(Frame::command("resolve_symbol", {cs, sym_id, "=" + spec.dump()}));
             ws.send(Frame::command("create_series", {cs, series_id, "s" + std::to_string(i), sym_id, timeframe, bar_count, ""}));
             labels[series_id] = symbols[i];
+            std::cout << "Completed Series Handshake\n";
         }
     };
 
@@ -148,21 +150,27 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type, 
             for (const std::string& payload : Frame::parse(msg->str)) {
                 // echo heartbeat to maintain connection
                 if (Frame::is_heartbeat(payload)) {
-                    ws.send(Frame::wrap(payload));
+                    const auto& heartbeat = Frame::wrap(payload);
+                    ws.send(heartbeat);
+                    std::cout << heartbeat << '\n';
                     continue;
                 }
 
                 json j = json::parse(payload, nullptr, false);
-                if (j.is_discarded())
+                if (j.is_discarded()){
+                    std::cout << "json discarded\n";
                     continue;
+                }
 
                 // first server frame
                 if (j.contains("session_id")) {
                     handshake();
                     continue;
                 }
-                if (!j.contains("m"))
+                if (!j.contains("m")){
+                    std::cout << "not valid socket.io\n";
                     continue;
+                }
                 const std::string m = j["m"].get<std::string>();
 
                 // message type and printing
@@ -183,6 +191,7 @@ void TradingView::subscribe(const std::vector<std::string>& symbols, Feed type, 
             std::cout << "[close] " << msg->closeInfo.code << " " << msg->closeInfo.reason << "\n";
             break;
         default:
+            std::cout << "Defaluted";
             break;
         }
     });
@@ -256,13 +265,18 @@ void TradingView::print_series(const json& series_map,
         auto& close_by_ts = closes[series_id]; // ordered map dedupes/sorts across full + delta frames
         double last_vol = std::nan("");
         for (const auto& bar : series["s"]) {
-            if (!bar.contains("v") || !bar["v"].is_array() || bar["v"].size() < 6)
+            // indices (e.g. CBOE:VIX) have no volume column, so bars are [time,O,H,L,C] (size 5)
+            if (!bar.contains("v") || !bar["v"].is_array() || bar["v"].size() < 5)
                 continue;
-            const auto& v = bar["v"]; // [time, open, high, low, close, volume]
+            const auto& v = bar["v"]; // [time, open, high, low, close, (volume)]
             close_by_ts[(long)v[0].get<double>()] = v[4].get<double>();
-            last_vol = v[5].get<double>();
+            if (v.size() >= 6)
+                last_vol = v[5].get<double>();
             std::cout << label << "  " << fmt_time((long)v[0].get<double>()) << " UTC  O=" << v[1] << " H=" << v[2] << " L=" << v[3]
-                      << " C=" << v[4] << " V=" << v[5] << "\n";
+                      << " C=" << v[4];
+            if (v.size() >= 6)
+                std::cout << " V=" << v[5];
+            std::cout << "\n";
         }
 
         std::vector<double> ordered;

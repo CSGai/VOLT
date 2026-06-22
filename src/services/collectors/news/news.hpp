@@ -37,6 +37,10 @@ public:
     /// pipeline 1x02 = runtime inference
     void run(int interval, Destination dest = Destination::TRAINING);
 
+    /// parse xml and extract wanted information into articles; exposed so
+    /// callers (and tests) can turn any RSS cpr::Response into Articles directly
+    static std::vector<news::Article> parse_rss(const cpr::Response& rss_res);
+
 private:
     struct CacheValidators {
         std::string etag;
@@ -57,9 +61,6 @@ private:
 
     /// parse ttl tag and sets to value, if value outside of range 0-60, default
     int parse_ttl(const std::string& ttl_str);
-
-    /// parse xml and extract wanted information into articles
-    std::vector<news::Article> parse_rss(const cpr::Response& rss_res);
 
     /// crawl through at retrieve the actual article itself from link
     // std::string crawl_article(const std::string& link);
